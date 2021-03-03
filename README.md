@@ -18,8 +18,8 @@ Implementation idea is as follow:
 ┌──────────────────────────────────┐                          ┌─────────────────────────────────┐
 │                                  │                          │                                 │
 │                                  │                          │                                 │
-│      PC (Client)                 │  WebSocket (Proxy SSH)   │       In a Repl (Server)        │
-│                                  ┼────────────────────────► │                                 │
+│                                  │  WebSocket (Proxy SSH)   │       In a Repl (Server)        │
+│           PC (Client)            ┼────────────────────────► │                                 │
 │                                  │                          │       With an SSH server        │
 │                                  │                          │                                 │
 │                                  │                          │                                 │
