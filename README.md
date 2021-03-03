@@ -32,3 +32,6 @@ This poses a few problems:
 - And if it doesn't, how should the ssh-server be implemented?
 - How will it ensure that the person connecting to the server is the repl owner/ securty concerns. 
 - Performance issues?
+
+## Update 1:
+After some exprimenting, it seems that running an ssh-server would require a lot of effort and it's not guranteed that it would work with the vscode extension. 
