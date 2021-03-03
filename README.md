@@ -1,5 +1,7 @@
 # replit-code-server
 
+Use VSCode on [Repl.it](https://replit.com)
+
 ### This should be a proof of concept which allows the usage of ssh-based vscode remote editing with replit
 
 Implementation idea is as follow:
