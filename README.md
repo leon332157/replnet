@@ -43,6 +43,9 @@ PS. I have only tested the ssh server with my own setup, I haven't tested it wit
 ## Update 3:
 The example ssh server I used does seem to partially work with the vscode extension however without the support of `direct-tcpip`, most of the functionality is not possble.
 
+## Update 4:
+The proof of concept was successful. I was able to forward SSH/TCP traffic over a [websocket runnel](https://github.com/derhuerst/tcp-over-websockets). Now, I think the project should be broken into two parts. 
+- A websocket tunnel to forward raw tcp traffic from a repl to a computer. Integrated with [replit-desktop](https://github.com/replit-discord/replit-desktop) OR Golang with native GUI. 
+- A custom SSH server compatible with openssh client written in golang that listens on 127.0.0.1 with support for vscode remote. 
 
-## Sneak Peak:
-![sneakpeak](sneakpeak.jpg)
+But it can also be **One unified Binary with client/server commandline argument and/or gui combining websocket tunnel and the ssh server into one binary. Which is harder to do but maybe easier to setup on replit. 
