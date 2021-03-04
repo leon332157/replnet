@@ -42,3 +42,7 @@ PS. I have only tested the ssh server with my own setup, I haven't tested it wit
 
 ## Update 3:
 The example ssh server I used does seem to partially work with the vscode extension however without the support of `direct-tcpip`, most of the functionality is not possble.
+
+
+## Sneak Peak:
+![sneakpeak](sneakpeak.jpg)
