@@ -20,7 +20,7 @@ Implementation idea is as follow:
 │                                  │                          │                                 │
 │                                  │  WebSocket (Proxy SSH)   │       In a Repl (Server)        │
 │           PC (Client)            ┼────────────────────────► │                                 │
-│                                  │                          │       With an SSH server        │
+│                                  │                          │       With an SSH server (Go)   │
 │                                  │                          │                                 │
 │                                  │                          │                                 │
 └──────────────────────────────────┘                          └─────────────────────────────────┘
@@ -35,3 +35,7 @@ This poses a few problems:
 
 ## Update 1:
 After some exprimenting, it seems that running an ssh-server would require a lot of effort and it's not guranteed that it would work with the vscode extension. 
+
+## Update 2:
+I have looked into some ssh server implementation written in go, it does seem like the extension works with an GO implementaion. However, the example I used did not have `direct-tcpip` channel, which is needed for port forwarding. So now, instead of trying to proxy an TCP connection to an openssh-server, the server itself should be an ssh server but with websockt over an SSH protocol. 
+PS. I have only tested the ssh server with my own setup, I haven't tested it with replit in an repl. 
