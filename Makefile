@@ -1,2 +1,6 @@
-run:
-	go run main.go
+build:
+	go build -o bin/client
+	./bin/client
+
+clean:
+	rm -rf bin/client
