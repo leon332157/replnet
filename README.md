@@ -49,3 +49,9 @@ The proof of concept was successful. I was able to forward SSH/TCP traffic over 
 - A custom SSH server compatible with openssh client written in golang that listens on 127.0.0.1 with support for vscode remote. 
 
 But it can also be **One unified Binary with client/server commandline argument and/or gui combining websocket tunnel and the ssh server into one binary. Which is harder to do but maybe easier to setup on replit. 
+
+# Server Implementation idea
+- Hybrid HTTP Proxy/SSH server
+- Listen on 0.0.0.0 in a repl and allow config file/commandline argument to forward raw http traffic (repl.co) to the underlying applicaion if applicable. 
+- Use path /ssh for the path of the websocket which forwards to the ssh server with io.Copy
+- Implement the ssh server first to make sure it's compatible with vscode, then implement the proxies. 
