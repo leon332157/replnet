@@ -1,0 +1,2 @@
+language = "go"
+run = "bash main.sh"
