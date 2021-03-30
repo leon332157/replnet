@@ -8,7 +8,11 @@
   },
   "devDependencies": {},
   "scripts": {
+<<<<<<< HEAD
     "start":"tcp-over-websockets-server -p 8080"
+=======
+    "start":"tcp-over-websockets-server -p 8181"
+>>>>>>> ef010e6e01ab5eea3fdd45ff96da9e7d69e6144a
   },
   "repository": {
     "type": "git",
