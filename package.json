@@ -1,0 +1,23 @@
+{
+  "name": "replit-code-server",
+  "version": "1.0.0",
+  "description": "Use VSCode on [Repl.it](https://replit.com)",
+  "main": "index.js",
+  "dependencies": {
+    "tcp-over-websockets": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start":"tcp-over-websockets-server -p 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leon332157/replit-code-server.git"
+  },
+  "author": "leon332157",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/leon332157/replit-code-server/issues"
+  },
+  "homepage": "https://github.com/leon332157/replit-code-server#readme"
+}
