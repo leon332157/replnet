@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package echo
 
 import (
 	"bufio"
@@ -13,7 +13,7 @@ import (
 )
 
 // main serves as the program entry point
-func main() {
+func StartServer() {
 	// obtain the port and prefix via program arguments
 	port := "127.0.0.1:8181"
 	prefix := "test"
