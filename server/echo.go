@@ -1,19 +1,14 @@
-// Copyright 2018 Venil Noronha. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package echo
+package server
 
 import (
 	"bufio"
 	"fmt"
 	"io"
 	"net"
-	"os"
 )
 
 // main serves as the program entry point
-func StartServer() {
+func StartEchoServer() {
 	// obtain the port and prefix via program arguments
 	port := "127.0.0.1:8181"
 	prefix := "test"
@@ -22,7 +17,6 @@ func StartServer() {
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		fmt.Println("failed to create listener, err:", err)
-		os.Exit(1)
 	}
 	fmt.Printf("listening on %s, prefix: %s\n", listener.Addr(), prefix)
 
@@ -35,12 +29,12 @@ func StartServer() {
 		}
 
 		// pass an accepted connection to a handler goroutine
-		go handleConnection(conn, prefix)
+		go echo(conn, prefix)
 	}
 }
 
 // handleConnection handles the lifetime of a connection
-func handleConnection(conn net.Conn, prefix string) {
+func echo(conn net.Conn, prefix string) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	for {
