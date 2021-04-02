@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"html"
 	"net/http"
+	"os"
 
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
@@ -11,6 +13,7 @@ import (
 
 func main() {
 	go server.StartForwardServer()
+	readReplConfig()
 	startHttp()
 }
 
@@ -36,4 +39,20 @@ func startFiber() {
 	})
 
 	app.Listen(":3000")
+}
+
+func readReplConfig() {
+	path := fmt.Sprintf("/home/runner/%v/.replit", os.Getenv("REPL_SLUG"))
+	//path := "main.go"
+	var lines []string
+	f, err := os.Open(path)
+	if err != nil {
+		fmt.Println(err)
+		f.Close()
+	}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	fmt.Println(lines)
 }

@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+type tcpForwarderConfig struct {
+	localPort string
+}
+
 // main serves as the program entry point
 func StartForwardServer() {
 	port := "0.0.0.0:8282"
