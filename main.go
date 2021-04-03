@@ -7,14 +7,29 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
 )
 
 func main() {
 	go server.StartForwardServer()
+	readOpenTCP()
 	readReplConfig()
 	startHttp()
+}
+
+func readOpenTCP() error {
+	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
+		return s.State == netstat.Listen
+	})
+	if err != nil {
+		return err
+	}
+	for _, e := range addrs {
+		fmt.Printf("%v\n", e)
+	}
+	return nil
 }
 
 func startHttp() {
