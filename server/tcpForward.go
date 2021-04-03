@@ -11,7 +11,7 @@ type tcpForwarderConfig struct {
 }
 
 // main serves as the program entry point
-func StartForwardServer() {
+func StartForwardServer(destPort uint16) {
 	port := "0.0.0.0:8282"
 	// create a tcp listener on the given port
 	listener, err := net.Listen("tcp4", port)
@@ -28,13 +28,12 @@ func StartForwardServer() {
 			fmt.Println("failed to accept connection, err:", err)
 			continue
 		}
-		go handleConnection(conn)
-
+		go handleConnection(conn, destPort)
 	}
 }
 
-func handleConnection(conn net.Conn) {
-	newConn, err := net.Dial("tcp", "127.0.0.1:8181")
+func handleConnection(conn net.Conn, port uint16) {
+	newConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", port))
 	if err != nil {
 		fmt.Println("failed to dial, err:", err)
 		return

@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"html"
+	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
@@ -13,23 +15,35 @@ import (
 )
 
 func main() {
-	go server.StartForwardServer()
-	readOpenTCP()
-	readReplConfig()
-	startHttp()
+	//readReplConfig()
+	go startHttp()
+	time.Sleep(1 * time.Second) // wait for server to be created
+	port := readOpenTCP()
+	fmt.Printf("Got port: %v\n", port)
+	go server.StartForwardServer(port)
+	for {
+
+		time.Sleep(1 * time.Second)
+	}
 }
 
-func readOpenTCP() error {
+func readOpenTCP() uint16 {
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
-		return s.State == netstat.Listen
+		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
 	if err != nil {
-		return err
+		return 0
+	}
+	if len(addrs) == 0 {
+		fmt.Println("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
 	}
 	for _, e := range addrs {
-		fmt.Printf("%v\n", e)
+		if e.Process != nil {
+			//fmt.Printf("%v\n", e)
+			return e.LocalAddr.Port
+		}
 	}
-	return nil
+	return 0
 }
 
 func startHttp() {
@@ -44,6 +58,7 @@ func startHttp() {
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
+	fmt.Println("http started")
 }
 
 func startFiber() {
@@ -53,7 +68,7 @@ func startFiber() {
 		return c.SendString("Hello, World 👋!")
 	})
 
-	app.Listen(":3000")
+	app.Listen("127.0.0.1:8383")
 }
 
 func readReplConfig() {
