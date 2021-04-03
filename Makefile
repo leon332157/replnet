@@ -1,6 +1,6 @@
 build:
-	go build -o bin/client
-	./bin/client
+	go build -o bin/replish
+	./bin/replish
 
 clean:
-	rm -rf bin/client
+	rm -rf bin/replish
