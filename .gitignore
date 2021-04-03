@@ -1,4 +1,5 @@
 bin/
 build/
+tmp/
 *.exe
 node_modules
