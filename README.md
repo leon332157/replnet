@@ -1,6 +1,6 @@
-# replit-code-server
+# replitsh [![Discord](https://img.shields.io/discord/437048931827056642.svg?logo=discord)](https://discord.gg/5gcPC6B) [![Run on Replit](https://replit.com/badge/github/leon332157/replit-desktop)](https://replit.com/github/leon332157/replish)
 
-Use VSCode on [Repl.it](https://replit.com)
+Hybrid SSH/HTTP server for [Repl.it](https://replit.com)
 
 ### This should be a proof of concept which allows the usage of ssh-based vscode remote editing with replit
 
