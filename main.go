@@ -2,7 +2,7 @@ package main
 
 import (
 	//"bufio"
-	"fmt"
+	. "fmt"
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
@@ -21,11 +21,11 @@ type DotReplit struct {
 
 func main() {
 	cfg := loadDotreplit()
-	fmt.Println(cfg)
+	Println(cfg)
 	go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
 	port := readOpenTCP()
-	fmt.Printf("Got port: %v\n", port)
+	Printf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
 	for {
 		time.Sleep(1 * time.Second)
@@ -40,7 +40,7 @@ func readOpenTCP() uint16 {
 		return 0
 	}
 	if len(addrs) == 0 {
-		fmt.Println("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
+		Println("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
 	}
 	for _, e := range addrs {
 		if e.Process != nil {
@@ -64,7 +64,7 @@ func loadDotreplit() DotReplit {
 	slug, ok := os.LookupEnv("REPL_SLUG")
 	var path string
 	if ok {
-		path = fmt.Sprintf("/home/runner/%v/.replit", slug)
+		path = Sprintf("/home/runner/%v/.replit", slug)
 	} else {
 		path = ".replit"
 	}
@@ -75,7 +75,7 @@ func loadDotreplit() DotReplit {
 	dotreplit := DotReplit{}
 	err = toml.Unmarshal(contents, &dotreplit)
 	if err != nil {
-		fmt.Println(err)
+		Println(err)
 	}
 	return dotreplit
 }
