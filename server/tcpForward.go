@@ -46,8 +46,9 @@ func handleConnection(conn net.Conn, port uint16) {
 
 func flush(src net.Conn, dst net.Conn) {
 	for {
-		buf := make([]byte, 1048576)
+		buf := make([]byte, 1024)
 		recvd, err := src.Read(buf)
+		fmt.Printf("%s\n", buf[0:recvd])
 		if err != nil {
 			fmt.Printf("error %v %v\n", src.RemoteAddr(), err)
 			dst.Close()

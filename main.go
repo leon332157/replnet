@@ -3,16 +3,14 @@ package main
 import (
 	//"bufio"
 	"fmt"
-	"html"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"os"
-	"time"
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
+	"io/ioutil"
+	"net"
+	"os"
+	"time"
 )
 
 type DotReplit struct {
@@ -24,7 +22,7 @@ type DotReplit struct {
 func main() {
 	cfg := loadDotreplit()
 	fmt.Println(cfg)
-	go startHttp()
+	go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
 	port := readOpenTCP()
 	fmt.Printf("Got port: %v\n", port)
@@ -52,23 +50,11 @@ func readOpenTCP() uint16 {
 	}
 	return 0
 }
-
-func startHttp() {
-	http.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
-	err := http.ListenAndServe("127.0.0.1:8181", nil)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-	}
-	fmt.Println("http started")
-}
-
 func startFiber() {
 	app := fiber.New()
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World 👋!")
+	app.Get("/*", func(c *fiber.Ctx) error {
+		return c.SendString("")
 	})
 
 	app.Listen("127.0.0.1:8383")
