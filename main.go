@@ -54,12 +54,8 @@ func readOpenTCP() uint16 {
 }
 
 func startHttp() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-	})
-
-	http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hi")
 	})
 	err := http.ListenAndServe("127.0.0.1:8181", nil)
 	if err != nil {
