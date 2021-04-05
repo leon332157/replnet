@@ -11,7 +11,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//server "github.com/leon332157/replish/server"
+	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
 )
 
@@ -33,12 +33,11 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
-	//Println(dotreplit)
 	//go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
 	getPort()
 	log.Debugf("Got port: %v\n", port)
-	//go server.StartForwardServer(port)
+	go server.StartForwardServer(port)
 	for {
 		time.Sleep(1 * time.Second)
 	}
@@ -93,6 +92,7 @@ func getPort() {
 		}
 	}
 }
+
 func startFiber() {
 	app := fiber.New()
 

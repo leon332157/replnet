@@ -38,8 +38,6 @@ func handleConnection(conn net.Conn, port uint16) {
 		fmt.Println("failed to dial, err:", err)
 		return
 	}
-	//defer newConn.Close()
-	//defer conn.Close()
 	go flush(conn, newConn)
 	go flush(newConn, conn)
 }
@@ -64,6 +62,5 @@ func flush(src net.Conn, dst net.Conn) {
 			return
 		}
 		buf = nil
-		//runtime.GC()
 	}
 }
