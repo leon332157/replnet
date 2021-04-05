@@ -2,88 +2,96 @@ package main
 
 import (
 	//"bufio"
-	. "fmt"
+	"fmt"
+	"github.com/cakturk/go-netstat/netstat"
+	fiber "github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/cakturk/go-netstat/netstat"
-	fiber "github.com/gofiber/fiber/v2"
-	server "github.com/leon332157/replish/server"
+	//server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
 )
 
 var (
 	dotreplit DotReplit
 	port      uint16
+	hasReplishField bool = false
 )
 
 type DotReplit struct {
 	Run      string
 	Language string
+	onBoot   string
+	packager map[string]interface{}
 	Replish  map[string]interface{}
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
-	Println(dotreplit)
-	go startFiber()
+	//Println(dotreplit)
+	//go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
-	port = getPort()
-	Printf("Got port: %v\n", port)
-	go server.StartForwardServer(port)
+	getPort()
+	log.Debugf("Got port: %v\n", port)
+	//go server.StartForwardServer(port)
 	for {
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func getPort() uint16 {
-	var rawPort interface{}
+func getPortAuto() {
+	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
+		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
+	})
+	if err != nil {
+		log.Fatalf("Reading ports failed:%v", err)
+	}
+	if len(addrs) == 0 {
+		log.Fatalf("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
+	}
+	for _, e := range addrs {
+		if e.Process != nil {
+			port = e.LocalAddr.Port
+		}
+	}
+}
+
+func getPort() {
 	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
 	if !ok {
-		Println("WARNING: Port is missing, defaulting to auto")
-		rawPort = "auto"
+		log.Warn("Port is missing, defaulting to auto")
+		getPortAuto()
+		return
 	}
-	_, ok = rawPort.(int64) // cheeck if port is int
+	intPort, ok := rawPort.(int64)
+	if ok { // port is int
+		if intPort > 65535 || intPort < 1 {
+			log.Fatalf("port %v is out of range(1-65535)", rawPort)
+		}
+		port = uint16(intPort)
+	}
+	strPort, ok := rawPort.(string)
 	if ok {
-		if rawPort.(int64) > 65535 || rawPort.(int64) < 1 {
-			panic("Port out of range!")
-		}
-		return uint16(rawPort.(int64)) // port is int, return as uint16
-	} else {
-		// port is string
-		rawPort, ok = dotreplit.Replish["port"].(string) // Check if port is string and exist
-		if !ok {
-			rawPort = "auto" // failed?? defaulting to auto
-		}
-		port, err := strconv.ParseUint(rawPort.(string), 10, 16)
-		if err == nil {
-			return uint16(port)
+		// Port is string
+		if strPort == "auto" {
+			getPortAuto()
+			return
 		} else {
-			Printf("Error when converting port:%v, defaulting to auto\n", err)
-			rawPort = "auto"
-		}
-	}
-
-	if rawPort == "auto" {
-		addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
-			return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
-		})
-		if err != nil {
-			panic("Reading ports failed.")
-		}
-		if len(addrs) == 0 {
-			panic("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
-		}
-		for _, e := range addrs {
-			if e.Process != nil {
-				return e.LocalAddr.Port
+			temp, err := strconv.ParseUint(strPort, 10, 16)
+			if err == nil {
+				port = uint16(temp)
+			} else {
+				log.Errorf("Error when converting port: %v, defaulting to auto\n", err)
+				getPortAuto()
+				return
 			}
 		}
 	}
-	return 0
 }
 func startFiber() {
 	app := fiber.New()
@@ -99,7 +107,7 @@ func loadDotreplit() {
 	slug, ok := os.LookupEnv("REPL_SLUG")
 	var path string
 	if ok {
-		path = Sprintf("/home/runner/%v/.replit", slug)
+		path = fmt.Sprintf("/home/runner/%v/.replit", slug)
 	} else {
 		path = ".replit"
 	}
@@ -110,9 +118,12 @@ func loadDotreplit() {
 	dotreplit = DotReplit{}
 	err = toml.Unmarshal(contents, &dotreplit)
 	if err != nil {
-		panic(Sprintf("failed to unmarshal: %v\n", err))
+		log.Panicf("failed to unmarshal: %v\n", err)
 	}
 	if dotreplit.Replish == nil {
-		panic("Replish field is empty! Check for typos in .replit!")
+		log.Warn("Replish field is empty or doesn't exist! Check for typos in .replit")
+		// Write replish field maybe
+	} else {
+		hasReplishField = true
 	}
 }
