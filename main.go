@@ -23,7 +23,7 @@ var (
 type DotReplit struct {
 	Run      string
 	Language string
-	Replish  map[string]string
+	Replish  map[string]interface{}
 }
 
 func main() {
@@ -40,17 +40,33 @@ func main() {
 }
 
 func getPort() uint16 {
-	rawPort, ok := dotreplit.Replish["port"]
+	var rawPort interface{}
+	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
 	if !ok {
+		Println("WARNING: Port is missing, defaulting to auto")
 		rawPort = "auto"
 	}
-	port, err := strconv.ParseUint(rawPort, 10, 16)
-	if err != nil {
-		Println(err)
-		rawPort = "auto"
+	_, ok = rawPort.(int64) // cheeck if port is int
+	if ok {
+		if rawPort.(int64) > 65535 || rawPort.(int64) < 1 {
+			panic("Port out of range!")
+		}
+		return uint16(rawPort.(int64)) // port is int, return as uint16
 	} else {
-		return uint16(port)
+		// port is string
+		rawPort, ok = dotreplit.Replish["port"].(string) // Check if port is string and exist
+		if !ok {
+			rawPort = "auto" // failed?? defaulting to auto
+		}
+		port, err := strconv.ParseUint(rawPort.(string), 10, 16)
+		if err == nil {
+			return uint16(port)
+		} else {
+			Printf("Error when converting port:%v, defaulting to auto\n", err)
+			rawPort = "auto"
+		}
 	}
+
 	if rawPort == "auto" {
 		addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
 			return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
@@ -94,7 +110,7 @@ func loadDotreplit() {
 	dotreplit = DotReplit{}
 	err = toml.Unmarshal(contents, &dotreplit)
 	if err != nil {
-		Println(err)
+		panic(Sprintf("failed to unmarshal: %v\n", err))
 	}
 	if dotreplit.Replish == nil {
 		panic("Replish field is empty! Check for typos in .replit!")
