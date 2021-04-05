@@ -1,4 +1,6 @@
 language = "go"
 run = "bash main.sh"
+onBoot="bash bootstrap.sh"
+
 [replish]
 port = "auto"

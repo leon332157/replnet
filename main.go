@@ -3,14 +3,21 @@ package main
 import (
 	//"bufio"
 	. "fmt"
+	"io/ioutil"
+	"net"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
-	"io/ioutil"
-	"net"
-	"os"
-	"time"
+)
+
+var (
+	dotreplit DotReplit
+	port      uint16
 )
 
 type DotReplit struct {
@@ -20,11 +27,11 @@ type DotReplit struct {
 }
 
 func main() {
-	cfg := loadDotreplit()
-	Println(cfg)
+	loadDotreplit()
+	Println(dotreplit)
 	go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
-	port := readOpenTCP()
+	port = getPort()
 	Printf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
 	for {
@@ -32,20 +39,32 @@ func main() {
 	}
 }
 
-func readOpenTCP() uint16 {
-	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
-		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
-	})
+func getPort() uint16 {
+	rawPort, ok := dotreplit.Replish["port"]
+	if !ok {
+		rawPort = "auto"
+	}
+	port, err := strconv.ParseUint(rawPort, 10, 16)
 	if err != nil {
-		return 0
+		Println(err)
+		rawPort = "auto"
+	} else {
+		return uint16(port)
 	}
-	if len(addrs) == 0 {
-		Println("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
-	}
-	for _, e := range addrs {
-		if e.Process != nil {
-			//fmt.Printf("%v\n", e)
-			return e.LocalAddr.Port
+	if rawPort == "auto" {
+		addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
+			return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
+		})
+		if err != nil {
+			panic("Reading ports failed.")
+		}
+		if len(addrs) == 0 {
+			panic("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
+		}
+		for _, e := range addrs {
+			if e.Process != nil {
+				return e.LocalAddr.Port
+			}
 		}
 	}
 	return 0
@@ -60,7 +79,7 @@ func startFiber() {
 	app.Listen("127.0.0.1:8383")
 }
 
-func loadDotreplit() DotReplit {
+func loadDotreplit() {
 	slug, ok := os.LookupEnv("REPL_SLUG")
 	var path string
 	if ok {
@@ -72,10 +91,12 @@ func loadDotreplit() DotReplit {
 	if err != nil {
 		contents = make([]byte, 0)
 	}
-	dotreplit := DotReplit{}
+	dotreplit = DotReplit{}
 	err = toml.Unmarshal(contents, &dotreplit)
 	if err != nil {
 		Println(err)
 	}
-	return dotreplit
+	if dotreplit.Replish == nil {
+		panic("Replish field is empty! Check for typos in .replit!")
+	}
 }
