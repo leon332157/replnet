@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
+	server "github.com/leon332157/replish/server"
+	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
-	server "github.com/leon332157/replish/server"
-	toml "github.com/pelletier/go-toml"
 )
 
 var (
-	dotreplit DotReplit
-	port      uint16
+	dotreplit       DotReplit
+	port            uint16
 	hasReplishField bool = false
 )
 
@@ -33,7 +34,8 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
-	//go startFiber()
+	//go startHijack()
+	go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to be created
 	getPort()
 	log.Debugf("Got port: %v\n", port)
@@ -41,6 +43,34 @@ func main() {
 	for {
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func startHijack() {
+	http.HandleFunc("/hijack", func(w http.ResponseWriter, r *http.Request) {
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			http.Error(w, "webserver doesn't support hijacking", http.StatusInternalServerError)
+			return
+		}
+		conn, bufrw, err := hj.Hijack()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Don't forget to close the connection:
+		defer conn.Close()
+		bufrw.WriteString("Now we're speaking raw TCP. Say hi: ")
+		bufrw.Flush()
+		s, err := bufrw.ReadString('\n')
+		if err != nil {
+			log.Printf("error reading string: %v", err)
+			return
+		}
+		fmt.Fprintf(bufrw, "You said: %q\nBye.\n", s)
+		bufrw.Flush()
+	})
+	http.ListenAndServe(":8484", nil)
+	log.Println("started")
 }
 
 func getPortAuto() {
@@ -97,6 +127,7 @@ func startFiber() {
 	app := fiber.New()
 
 	app.Get("/*", func(c *fiber.Ctx) error {
+		fmt.Println(c.Request())
 		return c.SendString("")
 	})
 

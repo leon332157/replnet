@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bufio"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
+	_ "strings"
 )
 
 type tcpForwarderConfig struct {
@@ -38,6 +41,12 @@ func handleConnection(conn net.Conn, port uint16) {
 		fmt.Println("failed to dial, err:", err)
 		return
 	}
+	reader := bufio.NewReader(conn)
+	_, err = http.ReadRequest(reader)
+	if err != nil{
+		fmt.Println(err)
+	}
+	//fmt.Printf("%v\n", req)
 	go flush(conn, newConn)
 	go flush(newConn, conn)
 }
