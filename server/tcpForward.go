@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,7 +23,7 @@ func StartForwardServer(destPort uint16) {
 		fmt.Println("failed to create listener, err:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("listening on %s\n", listener.Addr())
+	fmt.Printf("forwarder listening on %s\n", listener.Addr())
 
 	// listen for new connections
 	for {
@@ -42,8 +43,10 @@ func handleConnection(conn net.Conn, port uint16) {
 		return
 	}
 	reader := bufio.NewReader(conn)
-	_, err = http.ReadRequest(reader)
-	if err != nil{
+	buf, _ := reader.Peek(1024)
+	httpReader := bufio.NewReader(bytes.NewReader(buf))
+	_, err = http.ReadRequest(httpReader)
+	if err != nil {
 		fmt.Println(err)
 	}
 	//fmt.Printf("%v\n", req)
@@ -55,7 +58,7 @@ func flush(src net.Conn, dst net.Conn) {
 	for {
 		buf := make([]byte, 1024)
 		recvd, err := src.Read(buf)
-		fmt.Printf("%s\n", buf[0:recvd])
+		//fmt.Printf("%s\n", buf[0:recvd])
 		if err != nil {
 			fmt.Printf("error %v %v\n", src.RemoteAddr(), err)
 			dst.Close()

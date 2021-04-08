@@ -124,7 +124,7 @@ func getPort() {
 }
 
 func startFiber() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{DisableStartupMessage:true})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		fmt.Println(c.Request())
