@@ -129,7 +129,6 @@ func startFiber() {
 	app := fiber.New(fiber.Config{DisableStartupMessage:false})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
-		fmt.Println(c.Request())
 		return c.SendString("haha")
 	})
 

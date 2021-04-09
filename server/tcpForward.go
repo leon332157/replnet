@@ -4,16 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
 	_ "strings"
-	log"github.com/sirupsen/logrus"
 )
 
 type tcpForwarderConfig struct {
 	localPort string
 }
+
+func UNUSED(x ...interface{}) {}
 
 // main serves as the program entry point
 func StartForwardServer(destPort uint16) {
@@ -43,33 +45,34 @@ func handleConnection(conn net.Conn, port uint16) {
 		log.Errorf("failed to dial, err:", err)
 		return
 	}
-	reader := bufio.NewReader(conn)
-	buf, _ := reader.Peek(1024)
-	httpReader := bufio.NewReader(bytes.NewReader(buf))
-	_, err = http.ReadRequest(httpReader)
-	if err != nil {
-		fmt.Println(err)
-	}
-	//fmt.Printf("%v\n", req)
-	go flush(conn, reader, newConn)
-	go flush(newConn, reader, conn)
+	go flush(conn, newConn)
+	go flush(newConn, conn)
 }
 
-func flush(src net.Conn, srcReader *bufio.Reader, dst net.Conn) {
+func flush(src net.Conn, dst net.Conn) {
 	for {
 		buf := make([]byte, 1024)
-		recvd, err := srcReader.Read(buf)
-		//fmt.Printf("%s\n", buf[0:recvd])
+		recvd, err := src.Read(buf)
+		fmt.Printf("%s\n", buf[0:recvd])
 		if err != nil {
-			fmt.Printf("error %v %v\n", src.RemoteAddr(), err)
+			log.Errorf("error reading %v %v\n", src.RemoteAddr(), err)
 			dst.Close()
 			src.Close()
 			return
 		}
+		if bytes.Contains(buf[0:20], []byte("HTTP/")) { // if this is a HTTP request
+			httpReader := bufio.NewReader(bytes.NewReader(buf[0:]))
+			req, err := http.ReadRequest(httpReader)
+			if err != nil {
+				log.Error(err)
+			}
+			//UNUSED(req)
+			log.Debugf("request: %s\n", req)
+		}
 		sent, err := dst.Write(buf[0:recvd])
-		fmt.Printf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
+		log.Debugf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
 		if err != nil {
-			fmt.Printf("error sending to %v %v\n", dst.RemoteAddr(), err)
+			log.Errorf("error sending to %v %v\n", dst.RemoteAddr(), err)
 			dst.Close()
 			src.Close()
 			return
