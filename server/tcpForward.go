@@ -6,9 +6,9 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net"
-	"net/http"
+	_ "net/http"
 	"os"
-	_ "strings"
+	"github.com/valyala/fasthttp"
 )
 
 type tcpForwarderConfig struct {
@@ -61,13 +61,16 @@ func flush(src net.Conn, dst net.Conn) {
 			return
 		}
 		if bytes.Contains(buf[0:20], []byte("HTTP/")) { // if this is a HTTP request
+
 			httpReader := bufio.NewReader(bytes.NewReader(buf[0:]))
-			req, err := http.ReadRequest(httpReader)
+			//req, err := http.ReadRequest(httpReader)
+			newReq := fasthttp.AcquireRequest()
+			err = newReq.Read(httpReader)
 			if err != nil {
 				log.Error(err)
 			}
 			//UNUSED(req)
-			log.Debugf("request: %s\n", req)
+			log.Debugf("request: %s\n", newReq)
 		}
 		sent, err := dst.Write(buf[0:recvd])
 		log.Debugf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
