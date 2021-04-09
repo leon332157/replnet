@@ -32,11 +32,12 @@ type DotReplit struct {
 
 func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
 	//go startHijack()
 	go startFiber()
-	time.Sleep(1 * time.Second) // wait for server to be created
+	time.Sleep(1*time.Second) // wait for server to come online
 	getPort()
 	log.Debugf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
@@ -91,6 +92,7 @@ func getPortAuto() {
 }
 
 func getPort() {
+	log.Debug("Getting port")
 	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
 	if !ok {
 		log.Warn("Port is missing, defaulting to auto")
@@ -124,14 +126,15 @@ func getPort() {
 }
 
 func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage:true})
+	app := fiber.New(fiber.Config{DisableStartupMessage:false})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		fmt.Println(c.Request())
-		return c.SendString("")
+		return c.SendString("haha")
 	})
 
-	app.Listen("127.0.0.1:8383")
+	go app.Listen("127.0.0.1:8383")
+	log.Debug("fiber started")
 }
 
 func loadDotreplit() {

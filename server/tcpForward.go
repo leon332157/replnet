@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	_ "strings"
+	log"github.com/sirupsen/logrus"
 )
 
 type tcpForwarderConfig struct {
@@ -20,16 +21,16 @@ func StartForwardServer(destPort uint16) {
 	// create a tcp listener on the given port
 	listener, err := net.Listen("tcp4", port)
 	if err != nil {
-		fmt.Println("failed to create listener, err:", err)
+		log.Errorf("failed to create listener, err:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("forwarder listening on %s\n", listener.Addr())
+	log.Infof("forwarder listening on %s\n", listener.Addr())
 
 	// listen for new connections
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			fmt.Println("failed to accept connection, err:", err)
+			log.Errorf("failed to accept connection, err:", err)
 			continue
 		}
 		go handleConnection(conn, destPort)
@@ -39,7 +40,7 @@ func StartForwardServer(destPort uint16) {
 func handleConnection(conn net.Conn, port uint16) {
 	newConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", port))
 	if err != nil {
-		fmt.Println("failed to dial, err:", err)
+		log.Errorf("failed to dial, err:", err)
 		return
 	}
 	reader := bufio.NewReader(conn)
@@ -50,14 +51,14 @@ func handleConnection(conn net.Conn, port uint16) {
 		fmt.Println(err)
 	}
 	//fmt.Printf("%v\n", req)
-	go flush(conn, newConn)
-	go flush(newConn, conn)
+	go flush(conn, reader, newConn)
+	go flush(newConn, reader, conn)
 }
 
-func flush(src net.Conn, dst net.Conn) {
+func flush(src net.Conn, srcReader *bufio.Reader, dst net.Conn) {
 	for {
 		buf := make([]byte, 1024)
-		recvd, err := src.Read(buf)
+		recvd, err := srcReader.Read(buf)
 		//fmt.Printf("%s\n", buf[0:recvd])
 		if err != nil {
 			fmt.Printf("error %v %v\n", src.RemoteAddr(), err)
