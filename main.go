@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"bufio"
+	"bufio"
 	"fmt"
 	"github.com/cakturk/go-netstat/netstat"
 	fiber "github.com/gofiber/fiber/v2"
@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -37,7 +38,7 @@ func main() {
 	loadDotreplit()
 	//go startHijack()
 	go startFiber()
-	time.Sleep(1*time.Second) // wait for server to come online
+	time.Sleep(1 * time.Second) // wait for server to come online
 	getPort()
 	log.Debugf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
@@ -76,6 +77,9 @@ func startHijack() {
 
 func getPortAuto() {
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
+		if s.Process == nil {
+			return false
+		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
 	if err != nil {
@@ -83,14 +87,38 @@ func getPortAuto() {
 	}
 	if len(addrs) == 0 {
 		log.Fatalf("Looks like we aren't finding any open ports, are you listening on localhost (127.0.0.1)?")
-	}
-	for _, e := range addrs {
-		if e.Process != nil {
-			port = e.LocalAddr.Port
+	} else if len(addrs) > 1 {
+		fmt.Printf("Multiple ports detected: %v\n", len(addrs))
+		for index, sock := range addrs {
+			if sock.Process != nil {
+				fmt.Printf("%v. %v %v\n", index+1, sock.Process, sock.LocalAddr.Port)
+			}
+		}
+		fmt.Print("Choose port/process: ")
+		reader := bufio.NewReader(os.Stdin)
+		inp, err := reader.ReadString('\n')
+		inp = strings.TrimSuffix(inp, "\r\n")
+		if err != nil {
+			log.Panic(err)
+		}
+		sel, err := strconv.Atoi(inp)
+		if err != nil {
+			log.Panic(err)
+		}
+		if sel > len(addrs) { // Input is a port selection
+			port = checkPort(sel)
+		} else { // Input is list index
+			temp := addrs[sel-1]
+			port = temp.LocalAddr.Port
 		}
 	}
 }
-
+func checkPort(p int) uint16 {
+	if p > 65535 || p < 1 {
+		log.Fatalf("port %v is out of range(1-65535)", p)
+	}
+	return uint16(p)
+}
 func getPort() {
 	log.Debug("Getting port")
 	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
@@ -99,12 +127,9 @@ func getPort() {
 		getPortAuto()
 		return
 	}
-	intPort, ok := rawPort.(int64)
+	intPort, ok := rawPort.(int)
 	if ok { // port is int
-		if intPort > 65535 || intPort < 1 {
-			log.Fatalf("port %v is out of range(1-65535)", rawPort)
-		}
-		port = uint16(intPort)
+		port = checkPort(intPort)
 	}
 	strPort, ok := rawPort.(string)
 	if ok {
@@ -113,9 +138,9 @@ func getPort() {
 			getPortAuto()
 			return
 		} else {
-			temp, err := strconv.ParseUint(strPort, 10, 16)
+			temp, err := strconv.Atoi(strPort)
 			if err == nil {
-				port = uint16(temp)
+				port = checkPort(temp)
 			} else {
 				log.Errorf("Error when converting port: %v, defaulting to auto\n", err)
 				getPortAuto()
@@ -126,7 +151,7 @@ func getPort() {
 }
 
 func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage:false})
+	app := fiber.New(fiber.Config{DisableStartupMessage: false})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		return c.SendString("haha")
