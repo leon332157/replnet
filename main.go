@@ -77,7 +77,7 @@ func startHijack() {
 
 func getPortAuto() {
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
-		if s.Process == nil {
+		if s.Process == nil { // Process can be nil, discard it
 			return false
 		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
