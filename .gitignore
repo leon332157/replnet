@@ -1,5 +1,6 @@
 bin/
 build/
 tmp/
+vendor/
 *.exe*
 node_modules

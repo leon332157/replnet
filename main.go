@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/cakturk/go-netstat/netstat"
+	"github.com/leon332157/replish/netstat"
 	fiber "github.com/gofiber/fiber/v2"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
