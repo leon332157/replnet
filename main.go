@@ -111,6 +111,8 @@ func getPortAuto() {
 			temp := addrs[sel-1]
 			port = temp.LocalAddr.Port
 		}
+	} else {
+		port = addrs[0].LocalAddr.Port
 	}
 }
 func checkPort(p int) uint16 {
