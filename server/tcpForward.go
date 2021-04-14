@@ -5,29 +5,34 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/valyala/fasthttp"
 	"net"
 	_ "net/http"
 	"os"
-	"github.com/valyala/fasthttp"
+	"time"
 )
 
 func UNUSED(x ...interface{}) {}
 
+const REMOTE_PORT uint16 = 8383
+
 // main serves as the program entry point
 func StartForwardServer(destPort uint16) {
 	// create a tcp listener on port assigned by kernel
-	listener, err := net.Listen("tcp4", "0.0.0.0:0")
+	listener, err := net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%v", REMOTE_PORT))
 	if err != nil {
 		log.Errorf("failed to create listener, err:", err)
 		os.Exit(1)
 	}
 	log.Infof("forwarder listening on %s\n", listener.Addr())
-
-	localConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
+	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
+	localConn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		log.Errorf("failed to dial, err:", err)
 		return
 	}
+	localConn.SetKeepAlive(true)
+	localConn.SetKeepAlivePeriod(time.Second)
 	// listen for new connections
 	for {
 		conn, err := listener.Accept()
@@ -35,18 +40,9 @@ func StartForwardServer(destPort uint16) {
 			log.Errorf("failed to accept connection, err:", err)
 			continue
 		}
-		go handleConnection(conn, destPort)
+		go flush(conn, localConn)
+		go flush(localConn, conn) // Use io.Copy eventually
 	}
-}
-
-func handleConnection(conn net.Conn, port uint16) {
-	newConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", port))
-	if err != nil {
-		log.Errorf("failed to dial, err:", err)
-		return
-	}
-	go flush(conn, newConn)
-	go flush(newConn, conn)
 }
 
 func flush(src net.Conn, dst net.Conn) {
@@ -60,7 +56,7 @@ func flush(src net.Conn, dst net.Conn) {
 			src.Close()
 			return
 		}
-		fmt.Printf("%s\n",buf[0:100])
+		fmt.Printf("%s\n", buf[0:100])
 		if bytes.Contains(buf[0:100], []byte("HOST")) { // if this is a HTTP request
 
 			httpReader := bufio.NewReader(bytes.NewReader(buf[0:8192]))
