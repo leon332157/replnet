@@ -11,10 +11,6 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type tcpForwarderConfig struct {
-	localPort string
-}
-
 func UNUSED(x ...interface{}) {}
 
 // main serves as the program entry point
@@ -27,6 +23,11 @@ func StartForwardServer(destPort uint16) {
 	}
 	log.Infof("forwarder listening on %s\n", listener.Addr())
 
+	localConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
+	if err != nil {
+		log.Errorf("failed to dial, err:", err)
+		return
+	}
 	// listen for new connections
 	for {
 		conn, err := listener.Accept()
