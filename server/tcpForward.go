@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/valyala/fasthttp"
+	_ "io"
 	"net"
 	_ "net/http"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/valyala/fasthttp"
 )
 
 func UNUSED(x ...interface{}) {}
@@ -19,27 +21,34 @@ const REMOTE_PORT uint16 = 8383
 // main serves as the program entry point
 func StartForwardServer(destPort uint16) {
 	// create a tcp listener on port assigned by kernel
-	listener, err := net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%v", REMOTE_PORT))
+	var addr *net.TCPAddr
+	addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("0.0.0.0:%v", REMOTE_PORT))
+	listener, err := net.ListenTCP("tcp4", addr)
 	if err != nil {
 		log.Errorf("failed to create listener, err:", err)
 		os.Exit(1)
 	}
 	log.Infof("forwarder listening on %s\n", listener.Addr())
-	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
+	addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
 	localConn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		log.Errorf("failed to dial, err:", err)
 		return
 	}
 	localConn.SetKeepAlive(true)
-	localConn.SetKeepAlivePeriod(time.Second)
+	localConn.SetKeepAlivePeriod(5 * time.Second)
 	// listen for new connections
 	for {
-		conn, err := listener.Accept()
+		var conn *net.TCPConn
+		conn, err := listener.AcceptTCP()
 		if err != nil {
 			log.Errorf("failed to accept connection, err:", err)
 			continue
 		}
+		conn.SetKeepAlive(true)
+		conn.SetKeepAlivePeriod(5 * time.Second)
+		//go io.Copy(conn, localConn)
+		//go io.Copy(localConn, conn)
 		go flush(conn, localConn)
 		go flush(localConn, conn) // Use io.Copy eventually
 	}
@@ -58,8 +67,7 @@ func flush(src net.Conn, dst net.Conn) {
 		}
 		fmt.Printf("%s\n", buf[0:100])
 		if bytes.Contains(buf[0:100], []byte("HOST")) { // if this is a HTTP request
-
-			httpReader := bufio.NewReader(bytes.NewReader(buf[0:8192]))
+			httpReader := bufio.NewReader(bytes.NewReader(buf[0:2048])) // read 2048
 			newReq := fasthttp.AcquireRequest()
 			err = newReq.Read(httpReader)
 			if err != nil {

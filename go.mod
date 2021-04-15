@@ -7,6 +7,7 @@ require (
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/pelletier/go-toml v1.9.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/valyala/fasthttp v1.23.0
 	github.com/valyala/tcplisten v1.0.0 // indirect

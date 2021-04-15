@@ -79,6 +79,8 @@ func getPortAuto() {
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
 		if s.Process == nil { // Process can be nil, discard it
 			return false
+		} else if strings.Contains(s.Process.Name,"System") {
+			return false
 		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
@@ -159,7 +161,7 @@ func startFiber() {
 		return c.SendString("haha")
 	})
 
-	go app.Listen("127.0.0.1:8383")
+	go app.Listen("127.0.0.1:7373")
 	log.Debug("fiber started")
 }
 
