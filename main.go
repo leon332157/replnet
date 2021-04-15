@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/leon332157/replish/netstat"
 	fiber "github.com/gofiber/fiber/v2"
+	"github.com/leon332157/replish/netstat"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
@@ -42,6 +42,7 @@ func main() {
 	getPort()
 	log.Debugf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
+	go server.StartReverseProxy()
 	for {
 		time.Sleep(1 * time.Second)
 	}
@@ -79,7 +80,7 @@ func getPortAuto() {
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
 		if s.Process == nil { // Process can be nil, discard it
 			return false
-		} else if strings.Contains(s.Process.Name,"System") {
+		} else if strings.Contains(s.Process.Name, "System") {
 			return false
 		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
