@@ -9,7 +9,7 @@ import (
 )
 
 func StartReverseProxy() {
-	listener, err := net.Listen("tcp", ":8484")
+	listener, err := net.Listen("tcp4", ":8484")
 
 	if err != nil {
 		panic(err)
@@ -34,10 +34,11 @@ func StartReverseProxy() {
 type proxy struct{}
 
 func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	parsed, err := url.Parse(fmt.Sprintf("http://127.0.0.1:7373%s", r.URL))
+	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v%s", 7373, r.URL))
 	if err != nil {
 		panic(err)
 	}
-	proxy := httputil.NewSingleHostReverseProxy(parsed)
+	proxy := httputil.NewSingleHostReverseProxy(str)
 	proxy.ServeHTTP(w, r)
 }
+>>>>>>> Stashed changes

@@ -25,14 +25,14 @@ func StartForwardServer(destPort uint16) {
 	addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("0.0.0.0:%v", REMOTE_PORT))
 	listener, err := net.ListenTCP("tcp4", addr)
 	if err != nil {
-		log.Errorf("failed to create listener, err:", err)
+		log.Errorf("failed to create listener, err:%v", err)
 		os.Exit(1)
 	}
 	log.Infof("forwarder listening on %s\n", listener.Addr())
 	addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
 	localConn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
-		log.Errorf("failed to dial, err:", err)
+		log.Errorf("failed to dial, err:%v", err)
 		return
 	}
 	localConn.SetKeepAlive(true)
@@ -42,7 +42,7 @@ func StartForwardServer(destPort uint16) {
 		var conn *net.TCPConn
 		conn, err := listener.AcceptTCP()
 		if err != nil {
-			log.Errorf("failed to accept connection, err:", err)
+			log.Errorf("failed to accept connection, err:%v", err)
 			continue
 		}
 		conn.SetKeepAlive(true)
