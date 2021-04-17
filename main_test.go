@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/valyala/fasthttp"
@@ -40,3 +40,4 @@ func BenchmarkMain(b *testing.B) {
 		}
 	}
 }
+*/

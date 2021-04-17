@@ -1,1 +1,2 @@
-go build -o bin/replish && bin/replish
+#go build -o bin/replish && bin/replish
+go test

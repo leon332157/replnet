@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	fiber "github.com/gofiber/fiber/v2"
 	"github.com/leon332157/replish/netstat"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
@@ -37,7 +36,6 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
 	//go startHijack()
-	go startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
 	getPort()
 	log.Debugf("Got port: %v\n", port)
@@ -153,17 +151,6 @@ func getPort() {
 			}
 		}
 	}
-}
-
-func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: false})
-
-	app.Get("/*", func(c *fiber.Ctx) error {
-		return c.SendString("haha")
-	})
-
-	go app.Listen("127.0.0.1:7373")
-	log.Debug("fiber started")
 }
 
 func loadDotreplit() {
