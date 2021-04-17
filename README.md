@@ -1,4 +1,4 @@
-# replitsh [![Discord](https://img.shields.io/discord/437048931827056642.svg?logo=discord)](https://discord.gg/5gcPC6B) [![Run on Replit](https://replit.com/badge/github/leon332157/replit-desktop)](https://replit.com/github/leon332157/replish)
+# replish [![Discord](https://img.shields.io/discord/437048931827056642.svg?logo=discord)](https://discord.gg/5gcPC6B) [![Run on Replit](https://replit.com/badge/github/leon332157/replit-desktop)](https://replit.com/github/leon332157/replish)
 
 Hybrid SSH/HTTP server for [Repl.it](https://replit.com)
 
