@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/valyala/fasthttp"
 )
 
 var client = &fasthttp.Client{}

@@ -41,4 +41,3 @@ func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proxy := httputil.NewSingleHostReverseProxy(str)
 	proxy.ServeHTTP(w, r)
 }
->>>>>>> Stashed changes
