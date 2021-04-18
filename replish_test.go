@@ -8,13 +8,13 @@ import (
     "fmt"
     "github.com/valyala/fasthttp"
     "time"
+	//"github.com/leon332157/replish/server"
     fiber "github.com/gofiber/fiber/v2"
 )
 
 var client = &fasthttp.Client{}
 var _ = BeforeSuite(func() {
     go startFiber()
-    go main()
     time.Sleep(3*time.Second)
 })
 
@@ -42,7 +42,7 @@ var _ = Describe("Replish Main", func() {
 
 func makeGetRequests(n int) error {
 	for x := 0; x < n; x++ {
-		statusCode, _, err := client.GetTimeout(nil, "http://127.0.0.1:7373", 1000*time.Millisecond)
+		statusCode, _, err := client.GetTimeout(nil, "http://127.0.0.1:8383", 1000*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}
