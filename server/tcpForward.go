@@ -49,21 +49,43 @@ func StartForwardServer(destPort uint16) {
 		conn.SetKeepAlivePeriod(5 * time.Second)
 		//go io.Copy(conn, localConn)
 		//go io.Copy(localConn, conn)
-		go flush(conn, localConn)
-		go flush(localConn, conn) // Use io.Copy eventually
+		go flushToLocal(conn, localConn)
+		go flushFromLocal(localConn, conn) // Use io.Copy eventually
 	}
 }
 
-// TODO: have two different flush functions for each direction
-func flush(src net.Conn, dst net.Conn) {
+// dont work?
+func flushFromLocal(localConn net.Conn, remoteConn net.Conn) {
 	for {
 		buf := make([]byte, 1024000)
-		recvd, err := src.Read(buf)
+		recvd, err := remoteConn.Read(buf)
 		//fmt.Printf("%s\n", buf[0:recvd])
 		if err != nil {
-			log.Errorf("error reading %v %v\n", src.RemoteAddr(), err)
-			dst.Close()
-			src.Close()
+			log.Errorf("error reading %v %v\n", remoteConn.RemoteAddr(), err)
+			remoteConn.Close()
+			return
+		}
+		if len(buf[0:recvd]) != 0 {
+			sent, err := localConn.Write(buf[0:recvd])
+			log.Debugf("flushed %v bytes to %v\n", sent, localConn.RemoteAddr())
+			if err != nil {
+				log.Errorf("error sending to %v %v\n", localConn.RemoteAddr(), err)
+				remoteConn.Close()
+				return
+			}
+		}
+		buf = nil
+	}
+}
+
+func flushToLocal(remoteConn net.Conn, localConn net.Conn) {
+	for {
+		buf := make([]byte, 1024000)
+		recvd, err := remoteConn.Read(buf)
+		//fmt.Printf("%s\n", buf[0:recvd])
+		if err != nil {
+			log.Errorf("error reading %v %v\n", remoteConn.RemoteAddr(), err)
+			remoteConn.Close()
 			return
 		}
 		//fmt.Printf("%s\n", buf[0:100])
@@ -78,12 +100,11 @@ func flush(src net.Conn, dst net.Conn) {
 			//log.Debugf("request: %s\n", newReq)
 		}
 		if len(buf[0:recvd]) != 0 {
-			sent, err := dst.Write(buf[0:recvd])
-			log.Debugf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
+			sent, err := localConn.Write(buf[0:recvd])
+			log.Debugf("flushed %v bytes to %v\n", sent, localConn.RemoteAddr())
 			if err != nil {
-				log.Errorf("error sending to %v %v\n", dst.RemoteAddr(), err)
-				dst.Close()
-				src.Close()
+				log.Errorf("error sending to %v %v\n", localConn.RemoteAddr(), err)
+				remoteConn.Close()
 				return
 			}
 		}
