@@ -1,4 +1,4 @@
-package main_test
+package server_test
 
 import (
 	"testing"
@@ -8,6 +8,7 @@ import (
 	"github.com/leon332157/replish/server"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -19,6 +20,9 @@ func TestServer(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetReportCaller(false)
+	log.SetLevel(log.DebugLevel)
 	go startFiber()
 	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
@@ -28,7 +32,7 @@ var _ = BeforeSuite(func() {
 var client = &fasthttp.Client{}
 
 func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: true})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		return c.SendString("haha")

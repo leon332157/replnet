@@ -54,6 +54,7 @@ func StartForwardServer(destPort uint16) {
 	}
 }
 
+// TODO: have two different flush functions for each direction
 func flush(src net.Conn, dst net.Conn) {
 	for {
 		buf := make([]byte, 1024000)
@@ -76,13 +77,15 @@ func flush(src net.Conn, dst net.Conn) {
 			//UNUSED(req)
 			//log.Debugf("request: %s\n", newReq)
 		}
-		sent, err := dst.Write(buf[0:recvd])
-		log.Debugf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
-		if err != nil {
-			log.Errorf("error sending to %v %v\n", dst.RemoteAddr(), err)
-			dst.Close()
-			src.Close()
-			return
+		if len(buf[0:recvd]) != 0 {
+			sent, err := dst.Write(buf[0:recvd])
+			log.Debugf("flushed %v bytes to %v\n", sent, dst.RemoteAddr())
+			if err != nil {
+				log.Errorf("error sending to %v %v\n", dst.RemoteAddr(), err)
+				dst.Close()
+				src.Close()
+				return
+			}
 		}
 		buf = nil
 	}
