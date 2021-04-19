@@ -65,7 +65,7 @@ func flush(src net.Conn, dst net.Conn) {
 			src.Close()
 			return
 		}
-		fmt.Printf("%s\n", buf[0:100])
+		//fmt.Printf("%s\n", buf[0:100])
 		if bytes.Contains(buf[0:100], []byte("HOST")) { // if this is a HTTP request
 			httpReader := bufio.NewReader(bytes.NewReader(buf[0:2048])) // read 2048
 			newReq := fasthttp.AcquireRequest()

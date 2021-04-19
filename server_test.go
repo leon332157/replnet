@@ -20,6 +20,7 @@ func TestServer(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	go startFiber()
+	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
 	time.Sleep(3 * time.Second)
 })
