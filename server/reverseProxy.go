@@ -28,7 +28,7 @@ func StartReverseProxy() {
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println("reverse proxy started")
 }
 
 type proxy struct{}
