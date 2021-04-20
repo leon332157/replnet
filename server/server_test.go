@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 var client = &fasthttp.Client{}
 
 func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive:false})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: false})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		return c.SendString("haha")
@@ -61,21 +61,28 @@ var _ = Describe("Replish Server Main", func() {
 
 func makeRequests(n int, port int) error {
 	url := fmt.Sprintf("http://127.0.0.1:%v", port)
+	var (
+		req  fasthttp.Request
+		resp fasthttp.Response
+	)
+	req.SetRequestURI(url)
 	for x := 0; x < n; x++ {
-		statusCode, _, err := client.GetTimeout(nil, url, 1000*time.Millisecond)
+		req.Header.SetMethod(fasthttp.MethodGet)
+		err := client.DoTimeout(&req, &resp, 1000*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}
-		if statusCode != fasthttp.StatusOK {
-			return fmt.Errorf("Unexpected status code: %d. Expecting %d", statusCode, fasthttp.StatusOK)
+		if resp.StatusCode() != fasthttp.StatusOK {
+			return fmt.Errorf("Unexpected status code: %d. Expecting %d", resp.StatusCode(), fasthttp.StatusOK)
 		}
 		// Assuming GET didn't fail, POST shouldn't fail either.
-		statusCode, _, err = client.Post(nil, url, nil)
+		req.Header.SetMethod(fasthttp.MethodPost)
+		err = client.DoTimeout(&req, &resp, 1000*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}
-		if statusCode != fasthttp.StatusOK {
-			return fmt.Errorf("Unexpected status code: %d. Expecting %d", statusCode, fasthttp.StatusOK)
+		if resp.StatusCode() != fasthttp.StatusOK {
+			return fmt.Errorf("Unexpected status code: %d. Expecting %d", resp.StatusCode(), fasthttp.StatusOK)
 		}
 	}
 	return nil
