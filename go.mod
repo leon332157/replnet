@@ -3,7 +3,6 @@ module github.com/leon332157/replish
 go 1.16
 
 require (
-	github.com/franela/goblin v0.0.0-20210113153425-413781f5e6c8
 	github.com/gofiber/fiber/v2 v2.7.1
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/onsi/ginkgo v1.16.1

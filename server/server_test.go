@@ -22,7 +22,7 @@ func TestServer(t *testing.T) {
 var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	go startFiber()
 	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
@@ -53,7 +53,7 @@ var _ = Describe("Replish Server Main", func() {
 		})
 	})
 	Describe("Reverse Proxy", func() {
-		It("should serve 1000=0 requests (POST & GET)", func() {
+		It("should serve 10000 requests (POST & GET)", func() {
 			Expect(makeRequests(10000, 8484)).To(Succeed())
 		})
 	})
