@@ -1,4 +1,4 @@
-package server_test
+package main_test
 
 import (
 	"testing"
@@ -6,20 +6,17 @@ import (
 	"fmt"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/leon332157/replish/server"
-	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	log "github.com/sirupsen/logrus"
 	"time"
 
+	goblin "github.com/franela/goblin"
 	"github.com/valyala/fasthttp"
 )
 
 func TestServer(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Replish Server")
-}
-
-var _ = BeforeSuite(func() {
+	g := goblin.Goblin(t)
+	RegisterFailHandler(func(m string, _ ...int) { g.Fail(m) })
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
@@ -27,7 +24,17 @@ var _ = BeforeSuite(func() {
 	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
 	time.Sleep(3 * time.Second)
-})
+	g.Describe("TCP Forwarder", func() {
+		g.It("should serve 10000 requests (POST & GET)", func() {
+			Expect(makeRequests(10000, 8383)).To(Succeed())
+		})
+	})
+	g.Describe("Reverse Proxy", func() {
+		g.It("should serve 10000 requests (POST & GET)", func() {
+			Expect(makeRequests(10000, 8484)).To(Succeed())
+		})
+	})
+}
 
 var client = &fasthttp.Client{}
 
@@ -45,19 +52,6 @@ func startFiber() {
 	go app.Listen("127.0.0.1:7373")
 	fmt.Println("fiber started")
 }
-
-var _ = Describe("Replish Server Main", func() {
-	Describe("TCP Forwarder", func() {
-		It("should serve 10000 requests (POST & GET)", func() {
-			Expect(makeRequests(10000, 8383)).To(Succeed())
-		})
-	})
-	Describe("Reverse Proxy", func() {
-		It("should serve 1000=0 requests (POST & GET)", func() {
-			Expect(makeRequests(10000, 8484)).To(Succeed())
-		})
-	})
-})
 
 func makeRequests(n int, port int) error {
 	url := fmt.Sprintf("http://127.0.0.1:%v", port)
