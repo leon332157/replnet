@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	fiber "github.com/gofiber/fiber/v2"
 	"github.com/leon332157/replish/netstat"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
@@ -36,6 +37,7 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	loadDotreplit()
 	//go startHijack()
+	startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
 	getPort()
 	log.Debugf("Got port: %v\n", port)
@@ -45,7 +47,20 @@ func main() {
 		time.Sleep(1 * time.Second)
 	}
 }
+func startFiber() {
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: true})
 
+	app.Get("/*", func(c *fiber.Ctx) error {
+		return c.SendString("haha")
+	})
+
+	app.Post("/*", func(c *fiber.Ctx) error {
+		return c.SendString("haha")
+	})
+
+	go app.Listen("127.0.0.1:7373")
+	fmt.Println("fiber started")
+}
 func startHijack() {
 	http.HandleFunc("/hijack", func(w http.ResponseWriter, r *http.Request) {
 		hj, ok := w.(http.Hijacker)
@@ -102,11 +117,11 @@ func getPortAuto() {
 		if err != nil {
 			log.Panic(err)
 		}
-		sel, err := strconv.Atoi(inp)
+		sel, err := strconv.ParseInt(inp, 10, 64)
 		if err != nil {
 			log.Panic(err)
 		}
-		if sel > len(addrs) { // Input is a port selection
+		if sel > int64(len(addrs)) { // Input is a port selection
 			port = checkPort(sel)
 		} else { // Input is list index
 			temp := addrs[sel-1]
@@ -116,7 +131,7 @@ func getPortAuto() {
 		port = addrs[0].LocalAddr.Port
 	}
 }
-func checkPort(p int) uint16 {
+func checkPort(p int64) uint16 {
 	if p > 65535 || p < 1 {
 		log.Fatalf("port %v is out of range(1-65535)", p)
 	}
@@ -130,9 +145,11 @@ func getPort() {
 		getPortAuto()
 		return
 	}
-	intPort, ok := rawPort.(int)
+	intPort, ok := rawPort.(int64)
 	if ok { // port is int
+		//temp := intPort.(int)
 		port = checkPort(intPort)
+		return
 	}
 	strPort, ok := rawPort.(string)
 	if ok {
@@ -141,7 +158,8 @@ func getPort() {
 			getPortAuto()
 			return
 		} else {
-			temp, err := strconv.Atoi(strPort)
+			intPort, err := strconv.Atoi(strPort)
+			temp := int64(intPort)
 			if err == nil {
 				port = checkPort(temp)
 			} else {

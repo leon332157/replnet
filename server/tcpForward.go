@@ -58,15 +58,15 @@ func StartForwardServer(destPort uint16) {
 func flushFromLocal(localConn net.Conn, remoteConn net.Conn) {
 	for {
 		buf := make([]byte, 1024000)
-		recvd, err := remoteConn.Read(buf)
-		//fmt.Printf("%s\n", buf[0:recvd])
+		recvd, err := localConn.Read(buf)
+		fmt.Printf("%v %s\n", recvd, buf[0:recvd])
 		if err != nil {
 			log.Errorf("error reading %v %v\n", remoteConn.RemoteAddr(), err)
 			remoteConn.Close()
 			return
 		}
 		if len(buf[0:recvd]) != 0 {
-			sent, err := localConn.Write(buf[0:recvd])
+			sent, err := remoteConn.Write(buf[0:recvd])
 			log.Debugf("flushed %v bytes to %v\n", sent, localConn.RemoteAddr())
 			if err != nil {
 				log.Errorf("error sending to %v %v\n", localConn.RemoteAddr(), err)

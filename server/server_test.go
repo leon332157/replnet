@@ -23,7 +23,7 @@ var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	go startFiber()
+	startFiber()
 	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
 	time.Sleep(3 * time.Second)
