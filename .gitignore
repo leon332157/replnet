@@ -4,3 +4,4 @@ tmp/
 vendor/
 *.exe*
 node_modules
+*.test
