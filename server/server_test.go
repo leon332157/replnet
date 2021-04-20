@@ -23,7 +23,7 @@ var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	startFiber()
+	go startFiber()
 	go server.StartForwardServer(7373)
 	go server.StartReverseProxy()
 	time.Sleep(3 * time.Second)
@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 var client = &fasthttp.Client{}
 
 func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: true})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive:false})
 
 	app.Get("/*", func(c *fiber.Ctx) error {
 		return c.SendString("haha")
@@ -70,7 +70,6 @@ func makeRequests(n int, port int) error {
 			return fmt.Errorf("Unexpected status code: %d. Expecting %d", statusCode, fasthttp.StatusOK)
 		}
 		// Assuming GET didn't fail, POST shouldn't fail either.
-		// THERE'S NO TIMEOUT FOR POST???
 		statusCode, _, err = client.Post(nil, url, nil)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)

@@ -39,37 +39,37 @@ func StartForwardServer(destPort uint16) {
 	localConn.SetKeepAlivePeriod(5 * time.Second)
 	// listen for new connections
 	for {
-		var conn *net.TCPConn
-		conn, err := listener.AcceptTCP()
+		var remoteConn *net.TCPConn
+		remoteConn, err := listener.AcceptTCP()
 		if err != nil {
 			log.Errorf("failed to accept connection, err:%v", err)
 			continue
 		}
-		conn.SetKeepAlive(true)
-		conn.SetKeepAlivePeriod(5 * time.Second)
+		remoteConn.SetKeepAlive(true)
+		remoteConn.SetKeepAlivePeriod(5 * time.Second)
 		//go io.Copy(conn, localConn)
 		//go io.Copy(localConn, conn)
-		go flushToLocal(conn, localConn)
-		go flushFromLocal(localConn, conn) // Use io.Copy eventually
+		go flushToLocal(remoteConn, localConn)
+		go flushFromLocal(remoteConn, localConn) // Use io.Copy eventually
 	}
 }
 
 // dont work?
-func flushFromLocal(localConn net.Conn, remoteConn net.Conn) {
+func flushFromLocal(remoteConn net.Conn, localConn net.Conn) {
 	for {
 		buf := make([]byte, 1024000)
 		recvd, err := localConn.Read(buf)
-		fmt.Printf("%v %s\n", recvd, buf[0:recvd])
+		//fmt.Printf("%v %s\n", recvd, buf[0:recvd])
 		if err != nil {
-			log.Errorf("error reading %v %v\n", remoteConn.RemoteAddr(), err)
+			log.Errorf("error reading %v %v\n", localConn.RemoteAddr(), err)
 			remoteConn.Close()
 			return
 		}
 		if len(buf[0:recvd]) != 0 {
 			sent, err := remoteConn.Write(buf[0:recvd])
-			log.Debugf("flushed %v bytes to %v\n", sent, localConn.RemoteAddr())
+			log.Debugf("flushed %v bytes to %v\n", sent, remoteConn.RemoteAddr())
 			if err != nil {
-				log.Errorf("error sending to %v %v\n", localConn.RemoteAddr(), err)
+				log.Errorf("error sending to %v %v\n", remoteConn.RemoteAddr(), err)
 				remoteConn.Close()
 				return
 			}
