@@ -46,7 +46,7 @@ func startFiber() {
 	fmt.Println("fiber started")
 }
 
-var _ = Describe("Replish Server Main", func() {
+var _ = Describe("Replish Server", func() {
 	Describe("TCP Forwarder", func() {
 		It("should serve 10000 requests (POST & GET)", func() {
 			Expect(makeRequests(10000, 8383)).To(Succeed())
@@ -68,7 +68,7 @@ func makeRequests(n int, port int) error {
 	req.SetRequestURI(url)
 	for x := 0; x < n; x++ {
 		req.Header.SetMethod(fasthttp.MethodGet)
-		err := client.DoTimeout(&req, &resp, 1000*time.Millisecond)
+		err := client.DoTimeout(&req, &resp, 500*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}
@@ -77,7 +77,7 @@ func makeRequests(n int, port int) error {
 		}
 		// Assuming GET didn't fail, POST shouldn't fail either.
 		req.Header.SetMethod(fasthttp.MethodPost)
-		err = client.DoTimeout(&req, &resp, 1000*time.Millisecond)
+		err = client.DoTimeout(&req, &resp, 500*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}

@@ -29,14 +29,6 @@ func StartForwardServer(destPort uint16) {
 		os.Exit(1)
 	}
 	log.Infof("forwarder listening on %s\n", listener.Addr())
-	addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
-	localConn, err := net.DialTCP("tcp", nil, addr)
-	if err != nil {
-		log.Errorf("failed to dial, err:%v", err)
-		return
-	}
-	localConn.SetKeepAlive(true)
-	localConn.SetKeepAlivePeriod(5 * time.Second)
 	// listen for new connections
 	for {
 		var remoteConn *net.TCPConn
@@ -45,8 +37,17 @@ func StartForwardServer(destPort uint16) {
 			log.Errorf("failed to accept connection, err:%v", err)
 			continue
 		}
+    log.Infof("accepted from %v\n", remoteConn.RemoteAddr())
 		remoteConn.SetKeepAlive(true)
 		remoteConn.SetKeepAlivePeriod(5 * time.Second)
+    addr, _ = net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%v", destPort))
+	localConn, err := net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		log.Errorf("failed to dial, err:%v", err)
+		return
+	}
+	localConn.SetKeepAlive(true)
+	localConn.SetKeepAlivePeriod(5 * time.Second)
 		//go io.Copy(conn, localConn)
 		//go io.Copy(localConn, conn)
 		go flushToLocal(remoteConn, localConn)
@@ -54,7 +55,6 @@ func StartForwardServer(destPort uint16) {
 	}
 }
 
-// dont work?
 func flushFromLocal(remoteConn net.Conn, localConn net.Conn) {
 	for {
 		buf := make([]byte, 1024000)
@@ -86,6 +86,7 @@ func flushToLocal(remoteConn net.Conn, localConn net.Conn) {
 		if err != nil {
 			log.Errorf("error reading %v %v\n", remoteConn.RemoteAddr(), err)
 			remoteConn.Close()
+      localConn.Close()
 			return
 		}
 		//fmt.Printf("%s\n", buf[0:100])
@@ -105,6 +106,7 @@ func flushToLocal(remoteConn net.Conn, localConn net.Conn) {
 			if err != nil {
 				log.Errorf("error sending to %v %v\n", localConn.RemoteAddr(), err)
 				remoteConn.Close()
+        localConn.Close()
 				return
 			}
 		}

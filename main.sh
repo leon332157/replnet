@@ -1,2 +1,3 @@
 #go build -o bin/replish && bin/replish
-go test
+go clean -testcache
+go test ./...
