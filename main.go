@@ -42,7 +42,7 @@ func main() {
 	getPort()
 	log.Debugf("Got port: %v\n", port)
 	go server.StartForwardServer(port)
-	go server.StartReverseProxy()
+	go server.StartReverseProxy(port)
 	for {
 		time.Sleep(1 * time.Second)
 	}

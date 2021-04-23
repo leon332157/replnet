@@ -8,14 +8,14 @@ import (
 	"net/url"
 )
 
-func StartReverseProxy() {
+func StartReverseProxy(port uint16) {
 	listener, err := net.Listen("tcp4", ":8484")
 
 	if err != nil {
 		panic(err)
 	}
 
-	p := &proxy{}
+	p := &proxy{port: port}
 
 	go func() {
 		err := http.Serve(listener, p)
@@ -31,10 +31,12 @@ func StartReverseProxy() {
 	fmt.Println("reverse proxy started")
 }
 
-type proxy struct{}
+type proxy struct {
+	port uint16
+}
 
 func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v%s", 7373, r.URL))
+	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v%s", p.port, r.URL))
 	if err != nil {
 		panic(err)
 	}
