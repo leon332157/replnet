@@ -30,7 +30,7 @@ func TestServer(t *testing.T) {
 var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 	go startGhttpServer()
 	time.Sleep(1 * time.Second)
 	_, rawPort, _ := net.SplitHostPort(ghttpServer.Addr())
@@ -64,11 +64,8 @@ func startFiber() {
 
 func startGhttpServer() {
 	fmt.Printf("GHTTP addr: %s\n", ghttpServer.Addr())
-	ghttpServer.AppendHandlers(
-		ghttp.VerifyRequest("GET", "/get"),
-		ghttp.VerifyRequest("POST", "/post"), // NOT WORKING
-		ghttp.RespondWith(http.StatusOK, "test"),
-	)
+	ghttpServer.RouteToHandler("GET", "/", ghttp.CombineHandlers(ghttp.VerifyRequest("GET", "/"), ghttp.RespondWith(http.StatusOK, "test")))
+	ghttpServer.RouteToHandler("POST", "/post", ghttp.CombineHandlers(ghttp.VerifyRequest("POST", "/post"), ghttp.RespondWith(http.StatusOK, "test")))
 	ghttpServer.Start()
 }
 
@@ -93,9 +90,9 @@ func makeRequests(n int, port int) error {
 		resp fasthttp.Response
 	)
 	for x := 0; x < n; x++ {
-		req.SetRequestURI(url + "/get")
+		req.SetRequestURI(url)
 		req.Header.SetMethod("GET")
-		fmt.Printf("%s\n", req.RequestURI()) // USE http client instead (maybe)
+		//fmt.Printf("%s\n", req.RequestURI())
 		err := client.DoTimeout(&req, &resp, 500*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
@@ -106,7 +103,7 @@ func makeRequests(n int, port int) error {
 		// Assuming GET didn't fail, POST shouldn't fail either.
 		req.SetRequestURI(url + "/post") // switch URI to post
 		req.Header.SetMethod("POST")
-		fmt.Printf("%s\n", req.RequestURI())
+		//fmt.Printf("%s\n", req.RequestURI())
 		err = client.DoTimeout(&req, &resp, 500*time.Millisecond)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)

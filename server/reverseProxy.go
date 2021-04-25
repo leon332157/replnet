@@ -36,7 +36,7 @@ type proxy struct {
 }
 
 func (p *proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v%s", p.port, r.URL))
+	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", p.port))
 	if err != nil {
 		panic(err)
 	}
