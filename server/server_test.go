@@ -74,12 +74,19 @@ var _ = Describe("Replish Server", func() {
 	Describe("TCP Forwarder", func() {
 		It("should serve 10000 requests (POST & GET)", func() {
 			Expect(makeRequests(10000, 8383)).To(Succeed())
+
 		})
+		Measure("1000 requests with 10 samples (POST & GET)", func(b Benchmarker) {
+			b.Time("runtime", func() { makeRequests(1000, 8383) })
+		}, 10)
 	})
 	Describe("Reverse Proxy", func() {
-		It("should serve 10000 requests (POST & GET)", func() {
+		It("should serve 10000 requests with 10 samples (POST & GET)", func() {
 			Expect(makeRequests(10000, 8484)).To(Succeed())
 		})
+		Measure("1000 requests with 10 samples (POST & GET)", func(b Benchmarker) {
+			b.Time("runtime", func() { makeRequests(1000, 8484) })
+		}, 10)
 	})
 })
 
