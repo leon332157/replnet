@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"fmt"
-	fiber "github.com/gofiber/fiber/v2"
 	"github.com/leon332157/replish/server"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -29,8 +28,8 @@ func TestServer(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-	log.SetReportCaller(false)
-	log.SetLevel(log.InfoLevel)
+	log.SetReportCaller(true)
+	log.SetLevel(log.ErrorLevel)
 	go startGhttpServer()
 	time.Sleep(1 * time.Second)
 	_, rawPort, _ := net.SplitHostPort(ghttpServer.Addr())
@@ -46,21 +45,6 @@ var _ = AfterSuite(func() {
 
 var client = &fasthttp.Client{}
 var ghttpServer = ghttp.NewUnstartedServer()
-
-func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: false})
-
-	app.Get("/*", func(c *fiber.Ctx) error {
-		return c.SendString("haha")
-	})
-
-	app.Post("/*", func(c *fiber.Ctx) error {
-		return c.SendString("haha")
-	})
-
-	go app.Listen("127.0.0.1:7373")
-	fmt.Println("fiber started")
-}
 
 func startGhttpServer() {
 	fmt.Printf("GHTTP addr: %s\n", ghttpServer.Addr())

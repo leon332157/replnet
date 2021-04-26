@@ -35,7 +35,7 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	loadDotreplit()
+	loadDotreplit(loadDotreplitFile())
 	//go startHijack()
 	startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
@@ -61,6 +61,7 @@ func startFiber() {
 	go app.Listen("127.0.0.1:7373")
 	fmt.Println("fiber started")
 }
+
 func startHijack() {
 	http.HandleFunc("/hijack", func(w http.ResponseWriter, r *http.Request) {
 		hj, ok := w.(http.Hijacker)
@@ -94,7 +95,7 @@ func getPortAuto() {
 		if s.Process == nil { // Process can be nil, discard it
 			return false
 		} else if strings.Contains(s.Process.Name, "System") {
-			return false
+			return false // Discard System process 
 		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
@@ -131,12 +132,14 @@ func getPortAuto() {
 		port = addrs[0].LocalAddr.Port
 	}
 }
+
 func checkPort(p int64) uint16 {
 	if p > 65535 || p < 1 {
 		log.Fatalf("port %v is out of range(1-65535)", p)
 	}
 	return uint16(p)
 }
+
 func getPort() {
 	log.Debug("Getting port")
 	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
@@ -147,7 +150,6 @@ func getPort() {
 	}
 	intPort, ok := rawPort.(int64)
 	if ok { // port is int
-		//temp := intPort.(int)
 		port = checkPort(intPort)
 		return
 	}
@@ -171,7 +173,7 @@ func getPort() {
 	}
 }
 
-func loadDotreplit() {
+func loadDotreplitFile() []byte {
 	slug, ok := os.LookupEnv("REPL_SLUG")
 	var path string
 	if ok {
@@ -183,8 +185,13 @@ func loadDotreplit() {
 	if err != nil {
 		contents = make([]byte, 0)
 	}
+	return contents
+}
+
+// Use another function to allow for unit tests
+func loadDotreplit(contents []byte) {
 	dotreplit = DotReplit{}
-	err = toml.Unmarshal(contents, &dotreplit)
+	err := toml.Unmarshal(contents, &dotreplit)
 	if err != nil {
 		log.Panicf("failed to unmarshal: %v\n", err)
 	}

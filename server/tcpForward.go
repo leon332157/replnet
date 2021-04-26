@@ -49,7 +49,7 @@ func StartForwardServer(destPort uint16) {
 		localConn.SetKeepAlive(true)
 		localConn.SetKeepAlivePeriod(5 * time.Second)
 		go flushToLocal(remoteConn, localConn)
-		go flushFromLocal(remoteConn, localConn) // Use io.Copy eventually
+		go flushFromLocal(remoteConn, localConn)
 	}
 }
 
