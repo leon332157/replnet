@@ -13,3 +13,7 @@ func TestReplish(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Main")
 }
+
+var _ = Describe("dotreplit loader", func() {
+
+})
