@@ -15,5 +15,7 @@ func TestReplish(t *testing.T) {
 }
 
 var _ = Describe("dotreplit loader", func() {
-
+	It("should load valid config with no errors", func() {
+		
+	})
 })
