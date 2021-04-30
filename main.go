@@ -20,7 +20,7 @@ import (
 var (
 	dotreplit       DotReplit
 	port            uint16
-	hasReplishField bool = false
+	hasReplishField bool = false // TODO: AVOID USING GLOBAL VAR IN FUNC
 )
 
 type DotReplit struct {
@@ -202,3 +202,5 @@ func loadDotreplit(contents []byte) {
 		hasReplishField = true
 	}
 }
+
+
