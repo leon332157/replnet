@@ -3,6 +3,7 @@ package main
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	log "github.com/sirupsen/logrus"
 	"testing"
 )
 
@@ -10,6 +11,9 @@ func UNUSED(x ...interface{}) {
 }
 
 func TestReplish(t *testing.T) {
+	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+	log.SetReportCaller(true)
+	log.SetLevel(log.ErrorLevel)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Main")
 }
@@ -33,8 +37,7 @@ var _ = Describe("dotreplit loader function", func() {
 		Expect(loadDotreplit(content)).To(Equal(correctConfig))
 	})
 	It("should fail on invalid config", func() {
-		content := []byte(`broken toml`)
-		loadDotreplit(content)
-		//Expect(loadDotreplit(content)).Should(Panic())
+		content := []byte(`broken`)
+		Expect(loadDotreplit(content))
 	})
 })

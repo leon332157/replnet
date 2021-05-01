@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -60,34 +59,6 @@ func startFiber() {
 
 	go app.Listen("127.0.0.1:7373")
 	fmt.Println("fiber started")
-}
-
-func startHijack() {
-	http.HandleFunc("/hijack", func(w http.ResponseWriter, r *http.Request) {
-		hj, ok := w.(http.Hijacker)
-		if !ok {
-			http.Error(w, "webserver doesn't support hijacking", http.StatusInternalServerError)
-			return
-		}
-		conn, bufrw, err := hj.Hijack()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// Don't forget to close the connection:
-		defer conn.Close()
-		bufrw.WriteString("Now we're speaking raw TCP. Say hi: ")
-		bufrw.Flush()
-		s, err := bufrw.ReadString('\n')
-		if err != nil {
-			log.Printf("error reading string: %v", err)
-			return
-		}
-		fmt.Fprintf(bufrw, "You said: %q\nBye.\n", s)
-		bufrw.Flush()
-	})
-	http.ListenAndServe(":8484", nil)
-	log.Println("started")
 }
 
 func getPortAuto() {
@@ -193,7 +164,7 @@ func loadDotreplit(contents []byte) DotReplit {
 	temp := DotReplit{}
 	err := toml.Unmarshal(contents, &temp)
 	if err != nil {
-		log.Panicf("failed to unmarshal: %v\n", err)
+		log.Fatalf("failed to unmarshal: %v\n", err)
 	}
 	if temp.Replish == nil {
 		log.Warn("Replish field is empty or doesn't exist! Check for typos in .replit")
