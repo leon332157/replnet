@@ -16,23 +16,25 @@ func TestReplish(t *testing.T) {
 
 var _ = Describe("dotreplit loader function", func() {
 	It("should load valid config with no errors", func() {
+		correctConfig := DotReplit{
+			Run:      "bash main.sh",
+			Language: "go",
+			onBoot:   "",
+			packager: nil,
+			Replish:  map[string]interface{}{"port": 7373},
+		}
 		content := []byte(`language = "go"
 		run = "bash main.sh"
 		onBoot="bash bootstrap.sh"
 		
 		[replish]
 		port = 7373`)
-		loadDotreplit(content)
-		Expect(hasReplishField).To(BeTrue())
+
+		Expect(loadDotreplit(content)).To(Equal(correctConfig))
 	})
 	It("should fail on invalid config", func() {
-		content := []byte(`language = "go"
-		run = "bash main.sh"
-		onBoot="bash bootstrap.sh"
-		
-		[replish]
-		port = 7373`)
+		content := []byte(`broken toml`)
 		loadDotreplit(content)
-		Expect(hasReplishField).To(BeFalse()) //  NEED TO USE FUNC RETURN VALUE 
+		//Expect(loadDotreplit(content)).Should(Panic())
 	})
 })

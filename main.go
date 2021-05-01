@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	dotreplit       DotReplit
-	port            uint16
-	hasReplishField bool = false // TODO: AVOID USING GLOBAL VAR IN FUNC
+	dotreplit DotReplit
+	port      uint16
+	//hasReplishField bool = false
 )
 
 type DotReplit struct {
@@ -35,7 +35,7 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	loadDotreplit(loadDotreplitFile())
+	dotreplit = loadDotreplit(loadDotreplitFile())
 	//go startHijack()
 	startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
@@ -95,7 +95,7 @@ func getPortAuto() {
 		if s.Process == nil { // Process can be nil, discard it
 			return false
 		} else if strings.Contains(s.Process.Name, "System") {
-			return false // Discard System process 
+			return false // Discard System process
 		}
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
@@ -189,18 +189,15 @@ func loadDotreplitFile() []byte {
 }
 
 // Use another function to allow for unit tests
-func loadDotreplit(contents []byte) {
-	dotreplit = DotReplit{}
-	err := toml.Unmarshal(contents, &dotreplit)
+func loadDotreplit(contents []byte) DotReplit {
+	temp := DotReplit{}
+	err := toml.Unmarshal(contents, &temp)
 	if err != nil {
 		log.Panicf("failed to unmarshal: %v\n", err)
 	}
-	if dotreplit.Replish == nil {
+	if temp.Replish == nil {
 		log.Warn("Replish field is empty or doesn't exist! Check for typos in .replit")
 		// Write replish field maybe
-	} else {
-		hasReplishField = true
 	}
+	return temp
 }
-
-
