@@ -3,17 +3,18 @@ package main
 import (
 	"bufio"
 	"fmt"
-	fiber "github.com/gofiber/fiber/v2"
-	"github.com/leon332157/replish/netstat"
-	server "github.com/leon332157/replish/server"
-	toml "github.com/pelletier/go-toml"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	fiber "github.com/gofiber/fiber/v2"
+	"github.com/leon332157/replish/netstat"
+	server "github.com/leon332157/replish/server"
+	toml "github.com/pelletier/go-toml"
+	log "github.com/sirupsen/logrus"
 )
 
 var (

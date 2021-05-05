@@ -4,15 +4,16 @@ import (
 	"testing"
 
 	"fmt"
+	"net"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/leon332157/replish/server"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	ghttp "github.com/onsi/gomega/ghttp"
 	log "github.com/sirupsen/logrus"
-	"net"
-	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/valyala/fasthttp"
 )
