@@ -37,13 +37,14 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	//go startHijack()
-	startFiber()
+	//startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
-	getPort()
+	//getPort()
 	log.Debugf("Got port: %v\n", port)
 	//go server.StartForwardServer(port)
 	//go server.StartReverseProxy(port)
 	//go server.StartSSHServer()
+  go server.StartWebdav()
 	for {
 		time.Sleep(1 * time.Second)
 	}
