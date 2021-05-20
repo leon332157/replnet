@@ -1,5 +1,5 @@
 package server
-
+// Deprecated in favor of reverse proxy
 import (
 	"bufio"
 	"bytes"
