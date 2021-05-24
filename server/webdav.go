@@ -2,21 +2,21 @@ package server
 
 import (
 	"fmt"
-	"log"
+	"github.com/joho/godotenv"
 	"net/http"
 	"os"
 	"golang.org/x/net/webdav"
-  "github.com/joho/godotenv"
+	log "github.com/sirupsen/logrus"
 )
 
 func handleBasicAuth(username string, password string) bool {
-  err := godotenv.Load()
-  if err != nil {
-    fmt.Println("Error loading .env file")
-  }
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file")
+	}
 	USERNAME, ok := os.LookupEnv("REPLISH_USERNAME")
 	if !ok {
-		log.Fatal("Looking up username failed")
+		log.Fatal("Looking up username failed, defaulting to test")
 		return false
 	}
 	PASSWORD, ok := os.LookupEnv("REPLISH_PASSWORD")
@@ -31,11 +31,11 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("WWW-Authenticate", `Basic`)
 	username, password, ok := r.BasicAuth()
 	if !ok {
-		http.Error(w, "Not authorized", 401)
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
 	}
 	log.Printf("username: %s\npassword: %s\n", username, password)
 	if !handleBasicAuth(username, password) {
-		http.Error(w, "Not authorized", 401)
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
 	} else {
 		fmt.Println("passed")
 	}
@@ -46,10 +46,10 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ROOT_PATH, _ = os.Getwd()
 	}
-  //TODO: Maybe add directory listing
+	//TODO: Maybe add directory listing
 
 	srv := &webdav.Handler{
-    Prefix:"/__dav",
+		Prefix:     "/__dav",
 		FileSystem: webdav.Dir(ROOT_PATH),
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
