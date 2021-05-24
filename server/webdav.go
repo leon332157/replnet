@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 package server
 
 import (
@@ -6,12 +5,15 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	_ "github.com/leon332157/replish/server/webdav"
 	"golang.org/x/net/webdav"
+  "github.com/joho/godotenv"
 )
 
 func handleBasicAuth(username string, password string) bool {
+  err := godotenv.Load()
+  if err != nil {
+    fmt.Println("Error loading .env file")
+  }
 	USERNAME, ok := os.LookupEnv("REPLISH_USERNAME")
 	if !ok {
 		log.Fatal("Looking up username failed")
@@ -44,8 +46,10 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ROOT_PATH, _ = os.Getwd()
 	}
+  //TODO: Maybe add directory listing
 
 	srv := &webdav.Handler{
+    Prefix:"/__dav",
 		FileSystem: webdav.Dir(ROOT_PATH),
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
@@ -56,12 +60,6 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 			}
 		},
 	}
-	UNUSED(srv)
-	//srv.ServeHTTP(w, r)
-}
-func StartWebdav() {
-	handler := http.HandlerFunc(handlerDav)
-	http.Handle("/", handler)
-	//http.FileServer(http.Dir("/home/runner/replish"))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	//UNUSED(srv)
+	srv.ServeHTTP(w, r)
 }

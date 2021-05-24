@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	fiber "github.com/gofiber/fiber/v2"
 	"github.com/leon332157/replish/netstat"
 	server "github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
@@ -36,32 +35,16 @@ func main() {
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
 	dotreplit = loadDotreplit(loadDotreplitFile())
-	//go startHijack()
-	//startFiber()
 	time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
 	log.Debugf("Got port: %v\n", port)
 	//go server.StartForwardServer(port)
 	//go server.StartReverseProxy(port)
 	//go server.StartSSHServer()
-  go server.StartWebdav()
+  go server.StartMain()
 	for {
 		time.Sleep(1 * time.Second)
 	}
-}
-func startFiber() {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true, DisableKeepalive: false})
-
-	app.Get("/*", func(c *fiber.Ctx) error {
-		return c.SendString("haha")
-	})
-
-	app.Post("/*", func(c *fiber.Ctx) error {
-		return c.SendString("haha")
-	})
-
-	go app.Listen("127.0.0.1:7373")
-	fmt.Println("fiber started")
 }
 
 func getPortAuto() {

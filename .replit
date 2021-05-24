@@ -4,3 +4,5 @@ onBoot="bash bootstrap.sh"
 
 [replish]
 port = 7373
+
+[replish.webdav]
