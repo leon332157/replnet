@@ -1,10 +1,10 @@
 package server
 
+/*
 import (
 	"io"
-	"log"
-
 	"github.com/gliderlabs/ssh"
+	"fmt"
 )
 
 func StartSSHServer() {
@@ -12,7 +12,8 @@ func StartSSHServer() {
 		io.WriteString(s, "Hello world\n")
 	})
 
-	log.Fatal(ssh.ListenAndServe(":2222", nil))
+	fmt.Println(ssh.ListenAndServe(":2222", nil))
 }
 
 // https://github.com/leechristensen/GolangSSHServer
+*/

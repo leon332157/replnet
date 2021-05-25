@@ -9,12 +9,10 @@ import (
 	_ "net/http"
 	"os"
 	"time"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
 )
 
-func UNUSED(x ...interface{}) {}
 
 const REMOTE_PORT uint16 = 8383
 

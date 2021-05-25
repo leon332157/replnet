@@ -30,10 +30,12 @@ type DotReplit struct {
 	Replish  map[string]interface{}
 }
 
-func main() {
+func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
+}
+func main() {
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
@@ -41,7 +43,7 @@ func main() {
 	//go server.StartForwardServer(port)
 	//go server.StartReverseProxy(port)
 	//go server.StartSSHServer()
-  go server.StartMain()
+	go server.StartMain(port)
 	for {
 		time.Sleep(1 * time.Second)
 	}
