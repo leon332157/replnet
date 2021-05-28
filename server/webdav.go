@@ -16,7 +16,7 @@ func handleBasicAuth(username string, password string) bool {
 	}
 	USERNAME, ok := os.LookupEnv("REPLISH_USERNAME")
 	if !ok {
-		log.Fatal("Looking up username failed, defaulting to test")
+		log.Fatal("Looking up username failed")
 		return false
 	}
 	PASSWORD, ok := os.LookupEnv("REPLISH_PASSWORD")
@@ -28,16 +28,19 @@ func handleBasicAuth(username string, password string) bool {
 
 }
 func handlerDav(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("WWW-Authenticate", `Basic`)
 	username, password, ok := r.BasicAuth()
 	if !ok {
+    log.Debug("BasicAuth() failed")
+    w.Header().Set("WWW-Authenticate", `Basic realm="Enter username and password"`)
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
+    return
 	}
-	log.Printf("username: %s\npassword: %s\n", username, password)
+	//log.Printf("username: %s\npassword: %s\n", username, password)
 	if !handleBasicAuth(username, password) {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
+    return
 	} else {
-		fmt.Println("passed")
+		log.Debug("[Webdav] auth passed")
 	}
 	var ROOT_PATH string
 	REPL_SLUG, ok := os.LookupEnv("REPL_SLUG")
@@ -54,9 +57,9 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
 			if err != nil {
-				log.Printf("WEBDAV [%s]: %s, ERROR: %s\n", r.Method, r.URL, err)
+				log.Printf("[Webdav] %s: %s, ERROR: %s\n", r.Method, r.URL, err)
 			} else {
-				log.Printf("WEBDAV [%s]: %s \n", r.Method, r.URL)
+				log.Printf("[Webdav] %s: %s \n", r.Method, r.URL)
 			}
 		},
 	}
