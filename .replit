@@ -1,4 +1,4 @@
-language = "go"
+language = "bash"
 run = "bash main.sh"
 onBoot="bash bootstrap.sh"
 
