@@ -19,14 +19,14 @@ func StartMain(port uint16) {
 	http.HandleFunc("/__dav", handlerDav)
   */
 	//http.FileServer(http.Dir("/home/runner/replish"))
-	listener, err := net.Listen("tcp4", ":8484")
+	listener, err := net.Listen("tcp4", ":0")
 
 	if err != nil {
 		log.Panicf("[Server Main] %s\n", err)
 	}
 
 	//p := &ReverseProxy{port: port}
-  http.Serve(listener,&ReplishRouter{})
+  http.Serve(listener,&ReplishRouter{port:port})
 	/*go func() {=
 		err := http.Serve(listener, p)
 
@@ -41,27 +41,21 @@ func StartMain(port uint16) {
 	log.Debug("[Server Main] reverse proxy started")*/
 }
 
-func mainHandler() {
-  
+type ReplishRouter struct {
+  port uint16
 }
-type ReverseProxy struct {
-	port uint16
-}
-
-type ReplishRouter struct {}
 func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
   if strings.HasPrefix(r.URL.Path,"/__dav") {
     log.Debug("[Server Router] Match /__dav, passing to webdav")
     handlerDav(w,r)
   } else {
     fmt.Fprintf(w, "Hello, %q", r.URL.Path)
+    localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", p.port))
+	if err != nil {
+    log.FatalFn("[Server Router] Formatting url failed!")
+	}
+    proxy := httputil.NewSingleHostReverseProxy(localUrl)
+    proxy.ServeHTTP(w,r)
   }
 }
-func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	str, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", p.port))
-	if err != nil {
-		panic(err)
-	}
-	proxy := httputil.NewSingleHostReverseProxy(str)
-	proxy.ServeHTTP(w, r)
-}
+
