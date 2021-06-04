@@ -50,9 +50,9 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     handlerDav(w,r)
   } else {
     fmt.Fprintf(w, "Hello, %q", r.URL.Path)
-    localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", p.port))
+    localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.port))
 	if err != nil {
-    log.FatalFn("[Server Router] Formatting url failed!")
+    log.Fatalf("[Server Router] Formatting url failed!")
 	}
     proxy := httputil.NewSingleHostReverseProxy(localUrl)
     proxy.ServeHTTP(w,r)
