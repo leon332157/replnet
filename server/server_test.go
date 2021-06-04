@@ -31,15 +31,12 @@ var _ = BeforeSuite(func() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(true)
 	log.SetLevel(log.ErrorLevel)
-	go startGhttpServer()
-	time.Sleep(1 * time.Second)
+	startGhttpServer()
 	_, rawPort, _ := net.SplitHostPort(ghttpServer.Addr())
 	intPort, _ := strconv.Atoi(rawPort)
 	go server.StartForwardServer(uint16(intPort))
-	//go server.StartReverseProxy(uint16(intPort))
-	time.Sleep(2 * time.Second)
-})
-
+	go server.StartMain(8484, uint16(intPort))
+	time.Sleep(2 * time.Second)})
 var _ = AfterSuite(func() {
 	ghttpServer.Close()
 })
@@ -51,12 +48,12 @@ func startGhttpServer() {
 	fmt.Printf("GHTTP addr: %s\n", ghttpServer.Addr())
 	ghttpServer.RouteToHandler("GET", "/", ghttp.CombineHandlers(ghttp.VerifyRequest("GET", "/"), ghttp.RespondWith(http.StatusOK, "test")))
 	ghttpServer.RouteToHandler("POST", "/post", ghttp.CombineHandlers(ghttp.VerifyRequest("POST", "/post"), ghttp.RespondWith(http.StatusOK, "test")))
-	ghttpServer.Start()
+	go ghttpServer.Start()
 }
 
 var _ = Describe("Replish Server", func() {
 
-	Describe("TCP Forwarder", func() {
+	XDescribe("TCP Forwarder", func() {
 		It("should serve 10000 requests (POST & GET)", func() {
 			Expect(makeRequests(10000, 8383)).To(Succeed())
 
@@ -96,7 +93,7 @@ func makeRequests(n int, port int) error {
 		req.SetRequestURI(url + "/post") // switch URI to post
 		req.Header.SetMethod("POST")
 		//fmt.Printf("%s\n", req.RequestURI())
-		err = client.DoTimeout(&req, &resp, 500*time.Millisecond)
+		err = client.DoTimeout(&req, &resp, 1*time.Second)
 		if err != nil {
 			return fmt.Errorf("Failed on attempt %v err: %v", x, err)
 		}
