@@ -39,10 +39,7 @@ func main() {
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
-	log.Debugf("Got port: %v\n", port)
-	//go server.StartForwardServer(port)
-	//go server.StartReverseProxy(port)
-	//go server.StartSSHServer()
+	log.Debugf("[Main] Got port: %v\n", port)
 	go server.StartMain(port)
 	for {
 		time.Sleep(1 * time.Second)
