@@ -1,4 +1,4 @@
-language = "bash"
+language = "nix"
 run = "bash main.sh"
 onBoot="bash bootstrap.sh"
 
