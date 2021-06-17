@@ -1,5 +1,7 @@
 package main
 
+//SNOW WAS HERE
+
 import (
 	"bufio"
 	"fmt"
@@ -12,7 +14,8 @@ import (
 	"net/http"
 
 	"github.com/leon332157/replish/netstat"
-	server "github.com/leon332157/replish/server"
+	"github.com/leon332157/replish/server"
+  "github.com/leon332157/replish/client"
 	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,15 +44,21 @@ func startBasicHttp() {
 	http.HandleFunc("/",func (w http.ResponseWriter, req *http.Request){
 		fmt.Fprintf(w, "Hello: %s", req.URL.Path)
 	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	go startBasicHttp()
 	time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
+  port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
 	go server.StartMain(0, port)
+  run,ok:= dotreplit.Replish["run"].(string)
+  if !ok {
+    log.Warn("Reading 'run' field failed")
+  }
+  go client.ExecCommand(run)
 	for {
 		time.Sleep(1 * time.Second)
 	}
