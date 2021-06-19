@@ -15,14 +15,14 @@ func handleBasicAuth(username string, password string) bool {
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
-	USERNAME, ok := os.LookupEnv("REPLISH_USERNAME")
+	USERNAME, ok := os.LookupEnv("REPLISH_USER")
 	if !ok {
-		log.Fatal("Looking up username failed")
+		log.Error("Looking up username failed")
 		return false
 	}
-	PASSWORD, ok := os.LookupEnv("REPLISH_PASSWORD")
+	PASSWORD, ok := os.LookupEnv("REPLISH_PW")
 	if !ok {
-		log.Fatal("Looking up password failed")
+		log.Error("Looking up password failed")
 		return false
 	}
 	return username == USERNAME && password == PASSWORD

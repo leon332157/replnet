@@ -11,4 +11,5 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/valyala/fasthttp v1.26.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	nhooyr.io/websocket v1.8.7
 )
