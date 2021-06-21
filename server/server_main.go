@@ -49,6 +49,9 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/__dav") {
 		log.Debug("[Server Router] Match /__dav, passing to webdav")
 		handlerDav(w, r)
+	} else if strings.HasPrefix(r.URL.Path, "/__ws") {
+		log.Debug("[Server Router] Matching /__ws, passing to websocket")
+		handleWS(w,r)
 	} else {
 		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.port))
 		if err != nil {

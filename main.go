@@ -53,12 +53,13 @@ func main() {
 	//getPort()
 	port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
-	go server.StartMain(0, port)
-	run, ok := dotreplit.Replish["run"].(string)
+	go server.StartMain(7070, port)
+	go client.StartWS()
+	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
 		log.Warn("Reading 'run' field failed")
 	}
-	go client.ExecCommand(run)
+	go client.ExecCommand(run)*/
 	for {
 		time.Sleep(1 * time.Second)
 	}
