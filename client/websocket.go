@@ -11,7 +11,6 @@ func heartbeat(ctx context.Context, c *websocket.Conn, d time.Duration) {
 	t := time.NewTimer(d)
 	defer t.Stop()
 	for {
-		log.Debugln("a")
 		select {
 		case <-ctx.Done():
 			log.Debugln("done")
