@@ -51,19 +51,29 @@ func StartWS() {
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
-	c.Write(ctx,websocket.MessageText,[]byte("Test"))
-	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
-	/*err = c.Ping(ctx)
+	//c.Write(ctx,websocket.MessageText,[]byte("Test"))
+	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+	go func() {
+		for {
+			_, data, err := c.Read(context.Background())
+			log.Debugf("[WS handler] data: %s, err: %v", data, err)
+			if err != nil {
+				break
+			}
+			//time.Sleep(1000*time.Millisecond)
+		}
+	}()
+	err = c.Ping(ctx)
 	if err != nil {
 		log.Debugln(err)
 	} else {
 		log.Debugln("PING")
-	}*/
-	go func() {
+	}
+
+	/*go func() {
 		for {
 			timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			err := c.Ping(timeout)
-			//c.Read(ctx)
 			//c.Write(timeout,websocket.MessageText,[]byte("PING"))
 			log.Debugln("[Websocket Client] Keep alive")
 			if err != nil {
@@ -72,8 +82,8 @@ func StartWS() {
 			}
 			time.Sleep(1 * time.Second)
 		}
-	}()
+	}()*/
 	//hb := context.TODO()
 	//go heartbeat(ctx, c, time.Second)
-	//c.Close(websocket.StatusNormalClosure, "")
+	c.Close(websocket.StatusNormalClosure, "")
 }

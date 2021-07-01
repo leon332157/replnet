@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"time"
+	//"time"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"nhooyr.io/websocket"
@@ -35,9 +35,9 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 			_, data, err := c.Read(context.Background())
 			log.Debugf("[WS handler] data: %s, err: %v", data, err)
 			if err != nil {
-				//break
+				break
 			}
-			time.Sleep(1000*time.Millisecond)
+			//time.Sleep(1000*time.Millisecond)
 		}
 	}()
 	//c.Close(websocket.StatusNormalClosure, "")
