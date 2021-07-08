@@ -24,35 +24,28 @@ var transport = &http.Transport{
 }
 var httpClient = http.Client{Transport: transport}
 
-func heartbeat(ctx context.Context, c *websocket.Conn, d time.Duration) {
-	t := time.NewTimer(d)
-	defer t.Stop()
+func keepAlive(c websocket.Conn) {
 	for {
-		select {
-		case <-ctx.Done():
-			log.Debugln("done")
-			return
-		case <-t.C:
-		}
-		err := c.Ping(ctx)
+		timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		err := c.Ping(timeout)
+		//c.Write(timeout,websocket.MessageText,[]byte("PING"))
+		log.Debugln("[Websocket Client] Keep alive")
 		if err != nil {
-			log.Debugln(err)
-		} else {
-			log.Debugln("Ping!")
-		}
+			log.Debugf("[Websocket Client] Keep alive err: %s\n", err)
 
-		t.Reset(time.Second)
+		}
+		time.Sleep(1 * time.Second)
 	}
 }
 func StartWS() {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	//defer cancel()
-	c, _, err := websocket.Dial(ctx, "ws://localhost:7070/__ws", &websocket.DialOptions{HTTPClient: &httpClient})
+	c, _, err := websocket.Dial(ctx, "ws://localhost:7777/__ws", &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
 	//c.Write(ctx,websocket.MessageText,[]byte("Test"))
-	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
 	go func() {
 		for {
 			_, data, err := c.Read(context.Background())
@@ -63,27 +56,5 @@ func StartWS() {
 			//time.Sleep(1000*time.Millisecond)
 		}
 	}()
-	err = c.Ping(ctx)
-	if err != nil {
-		log.Debugln(err)
-	} else {
-		log.Debugln("PING")
-	}
-
-	/*go func() {
-		for {
-			timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			err := c.Ping(timeout)
-			//c.Write(timeout,websocket.MessageText,[]byte("PING"))
-			log.Debugln("[Websocket Client] Keep alive")
-			if err != nil {
-				log.Debugf("[Websocket Client] Keep alive err: %s\n", err)
-
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()*/
-	//hb := context.TODO()
-	//go heartbeat(ctx, c, time.Second)
-	c.Close(websocket.StatusNormalClosure, "")
+	//c.Close(websocket.StatusNormalClosure, "")
 }

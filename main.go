@@ -53,7 +53,7 @@ func main() {
 	//getPort()
 	port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
-	go server.StartMain(7070, port)
+	go server.StartMain(7777, port)
 	go client.StartWS()
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
