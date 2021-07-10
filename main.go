@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -47,6 +48,7 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
+
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	go startBasicHttp()
 	time.Sleep(1 * time.Second) // wait for server to come online
@@ -54,7 +56,7 @@ func main() {
 	port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
 	go server.StartMain(7777, port)
-	go client.StartWS()
+	go client.StartWS("ws://127.0.0.1:7777", 0, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
 		log.Warn("Reading 'run' field failed")

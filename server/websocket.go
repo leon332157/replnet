@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	//"time"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"nhooyr.io/websocket"
+	websocket "nhooyr.io/websocket"
 )
 
 func UNUSED(x ...interface{}) {
@@ -16,26 +17,12 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Errorf("[Websocker Handler] Accept err: %v\n", err)
 	}
-	
-	//ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	/*go func() {
-		for {
-			timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			err := c.Ping(timeout)
-			log.Debugln("[Websocket Handler] Keep alive")
-			if err != nil {
-				log.Debugf("[Websocket Handler] Keep alive err: %s\n", err)
-				break
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()*/
 	go func() {
 		for {
-			_, data, err := c.Read(context.Background())
-			log.Debugf("[WS handler] data: %s, err: %v", data, err)
+			msgtype, data, err := c.Read(context.Background())
+			log.Debugf("[WS handler] type: %s data: %s err: %v", msgtype, data, err)
 			if err != nil {
-				break
+				c.Close(websocket.StatusInternalError, fmt.Sprintf("[Websocker Handler] Read err: %v", err))
 			}
 			//time.Sleep(1000*time.Millisecond)
 		}

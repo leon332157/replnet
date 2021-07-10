@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -24,7 +26,7 @@ var transport = &http.Transport{
 }
 var httpClient = http.Client{Transport: transport}
 
-func keepAlive(c websocket.Conn) {
+func keepAlive(c *websocket.Conn) {
 	for {
 		timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		err := c.Ping(timeout)
@@ -37,10 +39,12 @@ func keepAlive(c websocket.Conn) {
 		time.Sleep(1 * time.Second)
 	}
 }
-func StartWS() {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+
+func StartWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+	remoteUrl = strings.TrimRight(remoteUrl, "/")
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	//defer cancel()
-	c, _, err := websocket.Dial(ctx, "ws://localhost:7777/__ws", &websocket.DialOptions{HTTPClient: &httpClient})
+	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws", remoteUrl), &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
@@ -48,13 +52,14 @@ func StartWS() {
 	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
 	go func() {
 		for {
-			_, data, err := c.Read(context.Background())
-			log.Debugf("[WS handler] data: %s, err: %v", data, err)
+			msgtype, data, err := c.Read(context.Background())
+			log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
 			if err != nil {
-				break
+				c.Close(websocket.StatusInternalError, err.Error())
 			}
 			//time.Sleep(1000*time.Millisecond)
 		}
 	}()
+	//go keepAlive(c)
 	//c.Close(websocket.StatusNormalClosure, "")
 }
