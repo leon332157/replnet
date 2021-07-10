@@ -4,7 +4,7 @@ package main
 
 import (
 	"bufio"
-	"flag"
+	//"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
