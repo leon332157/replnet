@@ -6,6 +6,12 @@ import (
 	"bufio"
 	//"flag"
 	"fmt"
+	"github.com/akamensky/argparse"
+	_ "github.com/leon332157/replish/client"
+	"github.com/leon332157/replish/netstat"
+	"github.com/leon332157/replish/server"
+	toml "github.com/pelletier/go-toml"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -13,18 +19,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/leon332157/replish/client"
-	"github.com/leon332157/replish/netstat"
-	"github.com/leon332157/replish/server"
-	toml "github.com/pelletier/go-toml"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
-	dotreplit DotReplit
-	port      uint16
+	dotreplit    DotReplit
+	port         uint16
+	globalConfig ReplishConfig
 	//hasReplishField bool = false
+)
+
+const (
+	ModeHelpString = "Mode of operation, can be client or server (Default: client)"
+	UrlHelpString  = "URL of the repl (repl.co link)"
 )
 
 type DotReplit struct {
@@ -34,11 +40,43 @@ type DotReplit struct {
 	packager map[string]interface{}
 	Replish  map[string]interface{}
 }
+type ReplishConfig struct {
+	mode        string
+	replUrl     string
+	listenPort  uint16
+	forwardPort uint16
+}
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
+	// Create new parser object
+	parser := argparse.NewParser("replish", "Command line tool for replit")
+	// Create string flag
+	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Required: true, Help: ModeHelpString, Default: "c"})
+	replUrl := parser.String("c", "remote-url", &argparse.Options{Required: false, Help: UrlHelpString})
+	listenPort := parser.Int("p", "listen-port", &argparse.Options{Required: false, Help: "Port to listen on", Default: 8080})
+	if *mode == "c" || *mode == "client" {
+		globalConfig.mode = "client"
+	} else {
+		globalConfig.mode = "server"
+	}
+	if globalConfig.mode == "client" && *replUrl != "" {
+		globalConfig.replUrl = *replUrl
+	} else {
+		log.Errorf("Invalid repl URL!")
+		log.Exit(1)
+	}
+	server.UNUSED(listenPort)
+	// Parse input
+	err := parser.Parse(os.Args)
+	if err != nil {
+		// In case of error print error and print usage
+		// This can also be done by passing -h or --help flags
+		fmt.Print(parser.Usage(err))
+		log.Exit(1)
+	}
 }
 
 func startBasicHttp() {
@@ -48,15 +86,14 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
-
 	dotreplit = loadDotreplit(loadDotreplitFile())
 	go startBasicHttp()
 	time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
 	port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
-	go server.StartMain(7777, port)
-	go client.StartWS("ws://127.0.0.1:7777", 0, 10*time.Second)
+	//go server.StartMain(7777, port)
+	//go client.StartWS("ws://127.0.0.1:7777", 0, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
 		log.Warn("Reading 'run' field failed")

@@ -3,6 +3,7 @@ module github.com/leon332157/replish
 go 1.16
 
 require (
+	github.com/akamensky/argparse v1.3.0
 	github.com/joho/godotenv v1.3.0
 	github.com/klauspost/compress v1.13.0 // indirect
 	github.com/onsi/ginkgo v1.16.4
