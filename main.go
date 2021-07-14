@@ -29,8 +29,9 @@ var (
 )
 
 const (
-	ModeHelpString = "Mode of operation, can be client or server (Default: client)"
+	ModeHelpString = "Mode of operation, can be client or server"
 	UrlHelpString  = "URL of the repl (repl.co link)"
+	ConfHelpString = "Path to config file"
 )
 
 type DotReplit struct {
@@ -54,26 +55,29 @@ func init() {
 	// Create new parser object
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	// Create string flag
-	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Required: true, Help: ModeHelpString, Default: "c"})
-	replUrl := parser.String("c", "remote-url", &argparse.Options{Required: false, Help: UrlHelpString})
-	listenPort := parser.Int("p", "listen-port", &argparse.Options{Required: false, Help: "Port to listen on", Default: 8080})
+	configFile := parser.File("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
+	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
+	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString})
+	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
 	if *mode == "c" || *mode == "client" {
 		globalConfig.mode = "client"
 	} else {
 		globalConfig.mode = "server"
 	}
-	if globalConfig.mode == "client" && *replUrl != "" {
+	globalConfig.replUrl = *replUrl
+	/*if globalConfig.mode == "client" && *replUrl != "" {
 		globalConfig.replUrl = *replUrl
 	} else {
 		log.Errorf("Invalid repl URL!")
 		log.Exit(1)
-	}
-	server.UNUSED(listenPort)
+	}*/
+	server.UNUSED(listenPort, configFile, replUrl)
 	// Parse input
 	err := parser.Parse(os.Args)
 	if err != nil {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
+		fmt.Println(err)
 		fmt.Print(parser.Usage(err))
 		log.Exit(1)
 	}
@@ -87,8 +91,8 @@ func startBasicHttp() {
 }
 func main() {
 	dotreplit = loadDotreplit(loadDotreplitFile())
-	go startBasicHttp()
-	time.Sleep(1 * time.Second) // wait for server to come online
+	//go startBasicHttp()
+	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
 	port = 8080
 	log.Debugf("[Main] Got port: %v\n", port)
