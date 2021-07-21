@@ -12,7 +12,7 @@ import (
 	"github.com/leon332157/replish/server"
 	toml "github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	_ "io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -41,11 +41,13 @@ type DotReplit struct {
 	packager map[string]interface{}
 	Replish  map[string]interface{}
 }
+
 type ReplishConfig struct {
 	mode        string
 	replUrl     string
 	listenPort  uint16
 	forwardPort uint16
+	ConfigFile  os.File
 }
 
 func init() {
@@ -59,25 +61,26 @@ func init() {
 	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
 	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString})
 	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
-	if *mode == "c" || *mode == "client" {
-		globalConfig.mode = "client"
-	} else {
-		globalConfig.mode = "server"
-	}
-	globalConfig.replUrl = *replUrl
 	/*if globalConfig.mode == "client" && *replUrl != "" {
 		globalConfig.replUrl = *replUrl
 	} else {
 		log.Errorf("Invalid repl URL!")
 		log.Exit(1)
 	}*/
-	server.UNUSED(listenPort, configFile, replUrl)
 	// Parse input
+	server.UNUSED(listenPort)
 	err := parser.Parse(os.Args)
+	if *mode == "c" || *mode == "client" {
+		globalConfig.mode = "client"
+	} else {
+		globalConfig.mode = "server"
+	}
+	globalConfig.replUrl = *replUrl
+	globalConfig.ConfigFile = *configFile
 	if err != nil {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
-		fmt.Println(err)
+		//fmt.Println(err)
 		fmt.Print(parser.Usage(err))
 		log.Exit(1)
 	}
@@ -90,7 +93,7 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
-	dotreplit = loadDotreplit(loadDotreplitFile())
+	dotreplit = loadDotreplit(readConfigFile())
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
@@ -191,8 +194,15 @@ func getPort() {
 	}
 }
 
-func loadDotreplitFile() []byte {
-	slug, ok := os.LookupEnv("REPL_SLUG")
+func readConfigFile() []byte {
+	contents := make([]byte, 1024)
+	read, err := globalConfig.ConfigFile.Read(contents)
+	if err != nil {
+		log.Errorf("Reading .replit failed %s", err)
+	}
+	contents = contents[:read]
+
+	/*slug, ok := os.LookupEnv("REPL_SLUG")
 	var path string
 	if ok {
 		path = fmt.Sprintf("/home/runner/%v/.replit", slug)
@@ -202,7 +212,7 @@ func loadDotreplitFile() []byte {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		contents = make([]byte, 0)
-	}
+	}*/
 	return contents
 }
 
