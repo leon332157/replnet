@@ -7,11 +7,15 @@ import (
 	//"flag"
 	"fmt"
 	"github.com/akamensky/argparse"
+	koanfLib "github.com/knadh/koanf"
+	koanfToml "github.com/knadh/koanf/parsers/toml"
 	_ "github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
-	toml "github.com/pelletier/go-toml"
+	//koanfFile "github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/rawbytes"
 	log "github.com/sirupsen/logrus"
+	//flag "github.com/spf13/pflag"
 	_ "io/ioutil"
 	"net"
 	"net/http"
@@ -26,6 +30,11 @@ var (
 	port         uint16
 	globalConfig ReplishConfig
 	//hasReplishField bool = false
+	konfConf = koanfLib.Conf{
+		Delim:       ".",
+		StrictMerge: true,
+	}
+	koanf = koanfLib.NewWithConf(konfConf)
 )
 
 const (
@@ -93,7 +102,7 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
-	dotreplit = loadDotreplit(readConfigFile())
+	readConfigFile()
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
@@ -194,38 +203,16 @@ func getPort() {
 	}
 }
 
-func readConfigFile() []byte {
+func readConfigFile() {
 	contents := make([]byte, 1024)
 	read, err := globalConfig.ConfigFile.Read(contents)
 	if err != nil {
 		log.Errorf("Reading .replit failed %s", err)
 	}
 	contents = contents[:read]
-
-	/*slug, ok := os.LookupEnv("REPL_SLUG")
-	var path string
-	if ok {
-		path = fmt.Sprintf("/home/runner/%v/.replit", slug)
-	} else {
-		path = ".replit"
-	}
-	contents, err := ioutil.ReadFile(path)
+	err = koanf.Load(rawbytes.Provider(contents), koanfToml.Parser())
 	if err != nil {
-		contents = make([]byte, 0)
-	}*/
-	return contents
-}
-
-// Use another function to allow for unit tests
-func loadDotreplit(contents []byte) DotReplit {
-	temp := DotReplit{}
-	err := toml.Unmarshal(contents, &temp)
-	if err != nil {
-		log.Fatalf("failed to unmarshal: %v\n", err)
+		log.Fatalf("Loading .replit failed %s", err)
 	}
-	if temp.Replish == nil {
-		log.Warn("Replish field is empty or doesn't exist! Check for typos in .replit")
-		// Write replish field maybe
-	}
-	return temp
+	koanf.Print()
 }
