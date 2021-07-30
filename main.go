@@ -9,13 +9,15 @@ import (
 	"github.com/akamensky/argparse"
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
+
 	_ "github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
 	//koanfFile "github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/rawbytes"
 	log "github.com/sirupsen/logrus"
-	//flag "github.com/spf13/pflag"
+	flag "github.com/spf13/pflag"
 	_ "io/ioutil"
 	"net"
 	"net/http"
@@ -63,9 +65,11 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	// Create new parser object
+	f := flag.NewFlagSet("config", flag.PanicOnError)
+	f.StringP(ModeHelpString, "m", "client", ModeHelpString)
+	f.Parse(os.Args[1:])
+	koanf.Load(posflag.Provider(f, ".", koanf),nil)
 	parser := argparse.NewParser("replish", "Command line tool for replit")
-	// Create string flag
 	configFile := parser.File("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
 	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
 	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString})
@@ -76,7 +80,6 @@ func init() {
 		log.Errorf("Invalid repl URL!")
 		log.Exit(1)
 	}*/
-	// Parse input
 	server.UNUSED(listenPort)
 	err := parser.Parse(os.Args)
 	if *mode == "c" || *mode == "client" {
