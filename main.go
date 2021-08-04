@@ -6,22 +6,28 @@ import (
 	"bufio"
 	//"flag"
 	"fmt"
+
 	"github.com/akamensky/argparse"
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
 
 	_ "github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
-	"github.com/leon332157/replish/server"
-	//koanfFile "github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/providers/posflag"
-	"github.com/knadh/koanf/providers/rawbytes"
+	//"github.com/leon332157/replish/server"
+
+	koanfFile "github.com/knadh/koanf/providers/file"
+	//koanfMap "github.com/knadh/koanf/providers/confmap"
+	//"github.com/knadh/koanf/providers/rawbytes"
+	//koanfStruct "github.com/knadh/koanf/providers/structs"
 	log "github.com/sirupsen/logrus"
-	flag "github.com/spf13/pflag"
+
+	//flag "github.com/spf13/pflag"
 	_ "io/ioutil"
 	"net"
 	"net/http"
 	"os"
+
+	//"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -48,47 +54,37 @@ const (
 type DotReplit struct {
 	Run      string
 	Language string
-	onBoot   string
-	packager map[string]interface{}
-	Replish  map[string]interface{}
+	OnBoot   string
+	Packager map[string]interface{}
+	Replish  ReplishConfig `koanf:"replish"`
 }
 
 type ReplishConfig struct {
-	mode        string
-	replUrl     string
-	listenPort  uint16
-	forwardPort uint16
-	ConfigFile  os.File
+	Mode           string `koanf:"mode"`
+	RemoteURL      string `koanf:"remoteUrl"`
+	ListenPort     uint16 `koanf:"local-port"`
+	ForwardPort    uint16 `koanf:"remote-port"`
+	configFilePath string
 }
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	f := flag.NewFlagSet("config", flag.PanicOnError)
-	f.StringP(ModeHelpString, "m", "client", ModeHelpString)
+	/*f := flag.NewFlagSet("config", flag.PanicOnError)
+	f.StringP("mode", "m", "client", ModeHelpString)
+	f.StringP("remote-url","c","",UrlHelpString)
+	f.Uint16P("local-port", "p", 8080, "Port to listen on")
 	f.Parse(os.Args[1:])
-	koanf.Load(posflag.Provider(f, ".", koanf),nil)
+	koanf.Load(posflag.Provider(f, ".", koanf),nil)*/
 	parser := argparse.NewParser("replish", "Command line tool for replit")
-	configFile := parser.File("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
+	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
+	/*configFile := parser.String("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
 	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
-	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString})
+	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString, Default: "https://replit.com"})
 	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
-	/*if globalConfig.mode == "client" && *replUrl != "" {
-		globalConfig.replUrl = *replUrl
-	} else {
-		log.Errorf("Invalid repl URL!")
-		log.Exit(1)
-	}*/
-	server.UNUSED(listenPort)
+	*/
 	err := parser.Parse(os.Args)
-	if *mode == "c" || *mode == "client" {
-		globalConfig.mode = "client"
-	} else {
-		globalConfig.mode = "server"
-	}
-	globalConfig.replUrl = *replUrl
-	globalConfig.ConfigFile = *configFile
 	if err != nil {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
@@ -96,6 +92,27 @@ func init() {
 		fmt.Print(parser.Usage(err))
 		log.Exit(1)
 	}
+	globalConfig.configFilePath = *configFilePath
+	/*if *mode == "c" || *mode == "client" {
+		globalConfig.Mode = "client"
+	} else {
+		globalConfig.Mode = "server"
+	}
+	globalConfig.RemoteURL = *replUrl
+	globalConfig.configFile = *configFile
+	if globalConfig.Mode == "client" && *replUrl != "" {
+		globalConfig.RemoteURL = *replUrl
+	} else {
+		log.Errorf("Invalid repl URL!")
+		log.Exit(1)
+	}
+	mapSet := make(map[string]interface{})
+	for _,v := range parser.GetArgs() {
+		mapSet[v.GetLname()] = v.GetResult()
+	}
+	koanf.Load(koanfMap.Provider(mapSet, ""), nil)
+	//koanf.Load(koanfStruct.Provider(globalConfig, "koanf"), nil)
+	koanf.Print()*/
 }
 
 func startBasicHttp() {
@@ -105,7 +122,8 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 func main() {
-	readConfigFile()
+	//loadConfig()
+	loadConfigKoanf(globalConfig.configFilePath)
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
@@ -173,9 +191,10 @@ func checkPort(p int64) uint16 {
 	return uint16(p)
 }
 
+/*
 func getPort() {
 	log.Debug("Getting port")
-	rawPort, ok := dotreplit.Replish["port"] // Check if port exist
+	rawPort, ok := //dotreplit.Replish["port"] // Check if port exist
 	if !ok {
 		log.Warn("Port is missing, defaulting to auto")
 		getPortAuto()
@@ -205,10 +224,11 @@ func getPort() {
 		}
 	}
 }
-
-func readConfigFile() {
+*/
+/*
+func loadConfig() {
 	contents := make([]byte, 1024)
-	read, err := globalConfig.ConfigFile.Read(contents)
+	read, err := globalConfig.configFile.Read(contents)
 	if err != nil {
 		log.Errorf("Reading .replit failed %s", err)
 	}
@@ -216,6 +236,15 @@ func readConfigFile() {
 	err = koanf.Load(rawbytes.Provider(contents), koanfToml.Parser())
 	if err != nil {
 		log.Fatalf("Loading .replit failed %s", err)
+	}
+	koanf.Print()
+}
+*/
+func loadConfigKoanf(filepath string) {
+	log.Debugf("opening %s", filepath)
+	err := koanf.Load(koanfFile.Provider(filepath), koanfToml.Parser())
+	if err != nil {
+		log.Fatalf("Loading config file %s failed %s", filepath, err)
 	}
 	koanf.Print()
 }

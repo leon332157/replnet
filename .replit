@@ -3,7 +3,6 @@ run = "bash main.sh"
 onBoot="bash bootstrap.sh"
 
 [replish]
-run = "python test.py"
-port = 7373
+
 
 [replish.webdav]

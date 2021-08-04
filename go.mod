@@ -11,7 +11,6 @@ require (
 	github.com/onsi/gomega v1.13.0
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/pflag v1.0.5
 	github.com/valyala/fasthttp v1.26.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	nhooyr.io/websocket v1.8.7
