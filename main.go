@@ -4,7 +4,6 @@ package main
 
 import (
 	"bufio"
-	//"flag"
 	"fmt"
 
 	"github.com/akamensky/argparse"
@@ -13,31 +12,25 @@ import (
 
 	_ "github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
-	//"github.com/leon332157/replish/server"
 
 	koanfFile "github.com/knadh/koanf/providers/file"
 	//koanfMap "github.com/knadh/koanf/providers/confmap"
 	//"github.com/knadh/koanf/providers/rawbytes"
 	//koanfStruct "github.com/knadh/koanf/providers/structs"
 	log "github.com/sirupsen/logrus"
-
-	//flag "github.com/spf13/pflag"
 	_ "io/ioutil"
 	"net"
 	"net/http"
 	"os"
-
-	//"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	dotreplit    DotReplit
 	port         uint16
 	globalConfig ReplishConfig
-	konfConf = koanfLib.Conf{
+	konfConf     = koanfLib.Conf{
 		Delim:       ".",
 		StrictMerge: true,
 	}
@@ -59,11 +52,11 @@ type DotReplit struct {
 }
 
 type ReplishConfig struct {
-	Mode           string `koanf:"mode"`
-	RemoteURL      string `koanf:"remoteUrl"`
-	LocalPort      uint16 `koanf:"local-port"`
-	RemotePort     uint16 `koanf:"remote-port"`
-	ListenPort     uint16 `koanf:"listen-port"`
+	Mode           string `koanf:"mode"`        // Mode of operation
+	RemoteURL      string `koanf:"remoteUrl"`   // The repl.co url to connect to
+	LocalPort      uint16 `koanf:"local-port"`  // The port to listen to for proxy
+	RemotePort     uint16 `koanf:"remote-port"` // The port to connect on a remote proxy
+	ListenPort     uint16 `koanf:"listen-port"` // The port replish listen on for WS connection
 	configFilePath string
 }
 
@@ -247,4 +240,7 @@ func loadConfigKoanf(filepath string) {
 		log.Fatalf("Loading config file %s failed %s", filepath, err)
 	}
 	koanf.Print()
+	if !koanf.Exists("replish") {
+		log.Fatalf("Replish field doesn't exist")
+	}
 }

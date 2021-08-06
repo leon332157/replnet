@@ -1,8 +1,5 @@
 language = "nix"
 run = "bash main.sh"
 onBoot="bash bootstrap.sh"
-
 [replish]
-
-
-[replish.webdav]
+local-port=8080
