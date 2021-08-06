@@ -37,7 +37,6 @@ var (
 	dotreplit    DotReplit
 	port         uint16
 	globalConfig ReplishConfig
-	//hasReplishField bool = false
 	konfConf = koanfLib.Conf{
 		Delim:       ".",
 		StrictMerge: true,
@@ -62,8 +61,9 @@ type DotReplit struct {
 type ReplishConfig struct {
 	Mode           string `koanf:"mode"`
 	RemoteURL      string `koanf:"remoteUrl"`
-	ListenPort     uint16 `koanf:"local-port"`
-	ForwardPort    uint16 `koanf:"remote-port"`
+	LocalPort      uint16 `koanf:"local-port"`
+	RemotePort     uint16 `koanf:"remote-port"`
+	ListenPort     uint16 `koanf:"listen-port"`
 	configFilePath string
 }
 
