@@ -54,8 +54,8 @@ type DotReplit struct {
 type ReplishConfig struct {
 	Mode           string `koanf:"mode"`        // Mode of operation
 	RemoteURL      string `koanf:"remoteUrl"`   // The repl.co url to connect to
-	LocalPort      uint16 `koanf:"local-port"`  // The port to listen to for proxy
-	RemotePort     uint16 `koanf:"remote-port"` // The port to connect on a remote proxy
+	LocalPort      uint16 `koanf:"local-port"`  // The port of your application
+	RemotePort     uint16 `koanf:"remote-port"` // The port of a remote application
 	ListenPort     uint16 `koanf:"listen-port"` // The port replish listen on for WS connection
 	configFilePath string
 }
@@ -64,12 +64,6 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
-	/*f := flag.NewFlagSet("config", flag.PanicOnError)
-	f.StringP("mode", "m", "client", ModeHelpString)
-	f.StringP("remote-url","c","",UrlHelpString)
-	f.Uint16P("local-port", "p", 8080, "Port to listen on")
-	f.Parse(os.Args[1:])
-	koanf.Load(posflag.Provider(f, ".", koanf),nil)*/
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
 	/*configFile := parser.String("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
@@ -218,29 +212,21 @@ func getPort() {
 	}
 }
 */
-/*
 func loadConfig() {
-	contents := make([]byte, 1024)
-	read, err := globalConfig.configFile.Read(contents)
-	if err != nil {
-		log.Errorf("Reading .replit failed %s", err)
-	}
-	contents = contents[:read]
-	err = koanf.Load(rawbytes.Provider(contents), koanfToml.Parser())
-	if err != nil {
-		log.Fatalf("Loading .replit failed %s", err)
-	}
-	koanf.Print()
+
 }
-*/
-func loadConfigKoanf(filepath string) {
+
+func readConfigKoanf(filepath string) {
 	log.Debugf("opening %s", filepath)
 	err := koanf.Load(koanfFile.Provider(filepath), koanfToml.Parser())
 	if err != nil {
 		log.Fatalf("Loading config file %s failed %s", filepath, err)
 	}
 	koanf.Print()
-	if !koanf.Exists("replish") {
+	if koanf.Exists("replish") {
+		koanf.Unmarshal("", &globalConfig)
+	} else {
 		log.Fatalf("Replish field doesn't exist")
 	}
+	fmt.Println(globalConfig)
 }
