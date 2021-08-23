@@ -19,8 +19,8 @@ var transport = &http.Transport{
 		KeepAlive: time.Second,
 	}).DialContext,
 	ForceAttemptHTTP2:     true,
-	MaxIdleConns:          100,
-	IdleConnTimeout:       90 * time.Second,
+	MaxIdleConns:          5,
+	IdleConnTimeout:       30 * time.Second,
 	TLSHandshakeTimeout:   10 * time.Second,
 	ExpectContinueTimeout: 1 * time.Second,
 }
@@ -40,7 +40,11 @@ func keepAlive(c *websocket.Conn) {
 	}
 }
 
-func StartWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+func ConnectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+	/*  if remoteUrl == "" {
+		log.Fatalf("[Websocket Client] remoteUrl is empty")
+		return
+	}*/
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	//defer cancel()

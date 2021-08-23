@@ -10,7 +10,7 @@ import (
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
 
-	_ "github.com/leon332157/replish/client"
+	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
 
 	koanfFile "github.com/knadh/koanf/providers/file"
@@ -110,14 +110,15 @@ func startBasicHttp() {
 }
 func main() {
 	//loadConfig()
-	loadConfigKoanf(globalConfig.configFilePath)
+	readConfigKoanf(globalConfig.configFilePath)
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
 	port = 8080
-	log.Debugf("[Main] Got port: %v\n", port)
+	//log.Debugf("[Main] Got port: %v\n", port)
 	//go server.StartMain(7777, port)
-	//go client.StartWS("ws://127.0.0.1:7777", 0, 10*time.Second)
+	checkConfig()
+	go client.ConnectWS(globalConfig.RemoteURL, globalConfig.RemotePort, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
 		log.Warn("Reading 'run' field failed")
@@ -212,8 +213,21 @@ func getPort() {
 	}
 }
 */
-func loadConfig() {
-
+func checkConfig() {
+	invalidConfig := func(message string) {
+		log.Fatalf("Invalid Config: %s", message)
+	}
+	if globalConfig.Mode == "" {
+		invalidConfig("Mode is missing")
+	}
+	if globalConfig.Mode == "client" {
+		if globalConfig.RemoteURL == "" || globalConfig.RemotePort == 0 {
+			//  Check that the remote url and remote app port are set
+			invalidConfig("Remote URL and port are required for client mode")
+		}
+	}
+	if globalConfig.Mode == "server" { // Check that local app port is set
+	}
 }
 
 func readConfigKoanf(filepath string) {
@@ -228,5 +242,5 @@ func readConfigKoanf(filepath string) {
 	} else {
 		log.Fatalf("Replish field doesn't exist")
 	}
-	fmt.Println(globalConfig)
+	fmt.Printf("%+v\n", globalConfig)
 }

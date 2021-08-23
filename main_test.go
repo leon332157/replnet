@@ -19,7 +19,7 @@ func TestReplish(t *testing.T) {
 }
 
 var _ = Describe("dotreplit loader function", func() {
-	XIt("should load valid config with no errors", func() {
+	/*XIt("should load valid config with no errors", func() {
 		correctConfig := DotReplit{
 			Run:      "bash main.sh",
 			Language: "go",
@@ -30,7 +30,7 @@ var _ = Describe("dotreplit loader function", func() {
 		content := []byte(`language = "go"
 		run = "bash main.sh"
 		onBoot="bash bootstrap.sh"
-		
+
 		[replish]
 		port = 7373`)
 
@@ -39,5 +39,5 @@ var _ = Describe("dotreplit loader function", func() {
 	XIt("should fail on invalid config", func() {
 		content := []byte(`broken`)
 		Expect(loadDotreplit(content))
-	})
+	})*/
 })
