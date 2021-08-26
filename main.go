@@ -21,6 +21,7 @@ import (
 	_ "io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -214,16 +215,14 @@ func getPort() {
 }
 */
 func checkConfig() {
-	invalidConfig := func(message string) {
-		log.Fatalf("Invalid Config: %s", message)
-	}
 	if globalConfig.Mode == "" {
-		invalidConfig("Mode is missing")
+		log.Warnln("Mode is missing, defaulting to client")
+		globalConfig.Mode = "client"
 	}
 	if globalConfig.Mode == "client" {
-		if globalConfig.RemoteURL == "" || globalConfig.RemotePort == 0 {
+		if _, err := url.ParseRequestURI(globalConfig.RemoteURL); err != nil {
 			//  Check that the remote url and remote app port are set
-			invalidConfig("Remote URL and port are required for client mode")
+			log.Fatalf("Remote URL is not valid: %v", err)
 		}
 	}
 	if globalConfig.Mode == "server" { // Check that local app port is set
@@ -236,11 +235,11 @@ func readConfigKoanf(filepath string) {
 	if err != nil {
 		log.Fatalf("Loading config file %s failed %s", filepath, err)
 	}
-	koanf.Print()
+
 	if koanf.Exists("replish") {
 		koanf.Unmarshal("", &globalConfig)
 	} else {
 		log.Fatalf("Replish field doesn't exist")
 	}
-	fmt.Printf("%+v\n", globalConfig)
+	log.Debugln(koanf.Sprint())
 }
