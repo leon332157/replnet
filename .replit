@@ -2,4 +2,5 @@ language = "nix"
 run = "bash main.sh"
 onBoot="bash bootstrap.sh"
 [replish]
-local-port=8080
+remote-url="http://localhost:"
+remote-port=65535

@@ -17,7 +17,6 @@ import (
 	//koanfMap "github.com/knadh/koanf/providers/confmap"
 	//"github.com/knadh/koanf/providers/rawbytes"
 	//koanfStruct "github.com/knadh/koanf/providers/structs"
-	log "github.com/sirupsen/logrus"
 	_ "io/ioutil"
 	"net"
 	"net/http"
@@ -26,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -54,7 +55,7 @@ type DotReplit struct {
 
 type ReplishConfig struct {
 	Mode           string `koanf:"mode"`        // Mode of operation
-	RemoteURL      string `koanf:"remoteUrl"`   // The repl.co url to connect to
+	RemoteURL      string `koanf:"remote-url"`  // The repl.co url to connect to
 	LocalPort      uint16 `koanf:"local-port"`  // The port of your application
 	RemotePort     uint16 `koanf:"remote-port"` // The port of a remote application
 	ListenPort     uint16 `koanf:"listen-port"` // The port replish listen on for WS connection
@@ -216,16 +217,24 @@ func getPort() {
 */
 func checkConfig() {
 	if globalConfig.Mode == "" {
-		log.Warnln("Mode is missing, defaulting to client")
+		log.Warnln("mode is missing, defaulting to client")
 		globalConfig.Mode = "client"
 	}
 	if globalConfig.Mode == "client" {
 		if _, err := url.ParseRequestURI(globalConfig.RemoteURL); err != nil {
 			//  Check that the remote url and remote app port are set
-			log.Fatalf("Remote URL is not valid: %v", err)
+			log.Fatalf("Remote URL is not valid: %v\n", err)
+		}
+		if !koanf.Exists("replish.remote-port") {
+			log.Fatalf("Remote port is unset")
+		}
+		remotePort := koanf.Int64("replish.remote-port")
+		if remotePort > 65535 || remotePort < 1 {
+			log.Fatalln("Remote port is invalid (1-65535)")
 		}
 	}
 	if globalConfig.Mode == "server" { // Check that local app port is set
+
 	}
 }
 
@@ -237,9 +246,13 @@ func readConfigKoanf(filepath string) {
 	}
 
 	if koanf.Exists("replish") {
-		koanf.Unmarshal("", &globalConfig)
+		err = koanf.Unmarshal("replish", &globalConfig)
+		if err != nil {
+			log.Fatalf("Unmarshalling replish failed: %v", err)
+		}
 	} else {
 		log.Fatalf("Replish field doesn't exist")
 	}
 	log.Debugln(koanf.Sprint())
+	log.Debugln(globalConfig)
 }
