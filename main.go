@@ -9,15 +9,12 @@ import (
 	"github.com/akamensky/argparse"
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
+	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
 
 	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
 
-	koanfFile "github.com/knadh/koanf/providers/file"
-	//koanfMap "github.com/knadh/koanf/providers/confmap"
-	//"github.com/knadh/koanf/providers/rawbytes"
-	//koanfStruct "github.com/knadh/koanf/providers/structs"
-	_ "io/ioutil"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -32,7 +29,7 @@ import (
 var (
 	port         uint16
 	globalConfig ReplishConfig
-	koanfConfig     = koanfLib.Conf{
+	koanfConfig  = koanfLib.Conf{
 		Delim:       ".",
 		StrictMerge: true,
 	}
@@ -66,6 +63,15 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
+}
+
+func startBasicHttp() {
+	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintf(w, "Hello: %s", req.URL.Path)
+	})
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
+}
+func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
 	/*configFile := parser.String("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
@@ -82,44 +88,15 @@ func init() {
 		log.Exit(1)
 	}
 	globalConfig.configFilePath = *configFilePath
-	/*if *mode == "c" || *mode == "client" {
-		globalConfig.Mode = "client"
-	} else {
-		globalConfig.Mode = "server"
+	if err := loadConfigKoanf(readConfigFile(globalConfig.configFilePath)); err != nil {
+		log.Fatalf("Failed to load config file: %v", err)
 	}
-	globalConfig.RemoteURL = *replUrl
-	globalConfig.configFile = *configFile
-	if globalConfig.Mode == "client" && *replUrl != "" {
-		globalConfig.RemoteURL = *replUrl
-	} else {
-		log.Errorf("Invalid repl URL!")
-		log.Exit(1)
-	}
-	mapSet := make(map[string]interface{})
-	for _,v := range parser.GetArgs() {
-		mapSet[v.GetLname()] = v.GetResult()
-	}
-	koanf.Load(koanfMap.Provider(mapSet, ""), nil)
-	//koanf.Load(koanfStruct.Provider(globalConfig, "koanf"), nil)
-	koanf.Print()*/
-}
-
-func startBasicHttp() {
-	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Hello: %s", req.URL.Path)
-	})
-	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
-}
-func main() {
-	//loadConfig()
-	readConfigKoanf(globalConfig.configFilePath)
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
 	port = 8080
 	//log.Debugf("[Main] Got port: %v\n", port)
 	//go server.StartMain(7777, port)
-	checkConfig()
 	go client.ConnectWS(globalConfig.RemoteURL, globalConfig.RemotePort, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
@@ -215,7 +192,33 @@ func getPort() {
 	}
 }
 */
-func checkConfig() {
+func readConfigFile(filepath string) []byte {
+	log.Infof("reading config file %s", filepath)
+	ioutil.ReadFile(filepath)
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		log.Fatalf("Error reading config file: %v\n", err)
+	}
+	return data
+}
+
+func loadConfigKoanf(content []byte) error {
+
+	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
+	if err != nil {
+		return err
+	}
+	if koanf.Exists("replish") {
+		err = koanf.Unmarshal("replish", &globalConfig)
+		if err != nil {
+			return fmt.Errorf("unmarshalling replish failed: %v", err)
+		}
+	} else {
+		return fmt.Errorf("replish field doesn't exist")
+	}
+	log.Debugln(koanf.Sprint())
+	log.Debugln(globalConfig)
+	// check config
 	if globalConfig.Mode == "" {
 		log.Warnln("mode is missing, defaulting to client")
 		globalConfig.Mode = "client"
@@ -223,43 +226,39 @@ func checkConfig() {
 	if globalConfig.Mode == "client" {
 		if _, err := url.ParseRequestURI(globalConfig.RemoteURL); err != nil {
 			//  Check that the remote url and remote app port are set
-			log.Fatalf("Remote URL is not valid: %v\n", err)
+			return fmt.Errorf("remote URL is not valid: %v", err)
 		}
 		if !koanf.Exists("replish.remote-port") {
-			log.Fatalf("Remote port is unset")
+			return fmt.Errorf("remote port is unset")
+
 		}
 		remotePort := koanf.Int64("replish.remote-port")
 		if remotePort > 65535 || remotePort < 1 {
-			log.Fatalln("Remote port is invalid (1-65535)")
+			return fmt.Errorf("remote port is invalid (1-65535)")
 		}
 	}
 	if globalConfig.Mode == "server" { // Check that local app port is set
 		if !koanf.Exists("replish.listen-port") {
-			log.Warnln("Listen port is unset, defaulting to 0")
+			log.Warnln("listen port is unset, defaulting to 0")
 			globalConfig.ListenPort = 0
 		}
-		if !koanf.Exists("replish.local-port") {
-			log.Fatalln("Local port is unset")
+		listenPort := koanf.Int64("replish.listen-port")
+		if listenPort > 65535 || listenPort < 0 {
+			log.Warnln("listen port is invalid (0-65535), defaulting to 0")
+			globalConfig.ListenPort = 0
 		}
-
-	}
-}
-
-func readConfigKoanf(filepath string) {
-	log.Debugf("opening %s", filepath)
-	err := koanf.Load(koanfFile.Provider(filepath), koanfToml.Parser())
-	if err != nil {
-		log.Fatalf("Loading config file %s failed %s", filepath, err)
-	}
-
-	if koanf.Exists("replish") {
-		err = koanf.Unmarshal("replish", &globalConfig)
-		if err != nil {
-			log.Fatalf("Unmarshalling replish failed: %v", err)
+		if koanf.Exists("replish.local-port") {
+		} else {
+			return fmt.Errorf("local port is not set")
 		}
-	} else {
-		log.Fatalf("Replish field doesn't exist")
+		localPort := koanf.Int64("replish.local-port")
+		if localPort == 0 {
+			//TODO: Attempt auto detect local port
+		} else {
+			if localPort > 65535 || localPort < 1 {
+				return fmt.Errorf("local port is invalid (1-65535)")
+			}
+		}
 	}
-	log.Debugln(koanf.Sprint())
-	log.Debugln(globalConfig)
+	return nil
 }

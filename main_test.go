@@ -9,7 +9,6 @@ import (
 
 func UNUSED(x ...interface{}) {
 }
-
 func TestReplish(t *testing.T) {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(true)
@@ -19,25 +18,83 @@ func TestReplish(t *testing.T) {
 }
 
 var _ = Describe("dotreplit loader function", func() {
-	/*XIt("should load valid config with no errors", func() {
-		correctConfig := DotReplit{
-			Run:      "bash main.sh",
-			Language: "go",
-			onBoot:   "",
-			packager: nil,
-			Replish:  map[string]interface{}{"port": 7373},
-		}
-		content := []byte(`language = "go"
+	It("should fail on invalid toml", func() {
+		content := []byte(`broken`)
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
+	It("should fail when replish isn't present", func() {
+		content := []byte(
+			`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"`,
+		)
+
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
+	It("should default to client mode when mode is not set", func() {
+		content := []byte(
+			`language = "go"
 		run = "bash main.sh"
 		onBoot="bash bootstrap.sh"
-
-		[replish]
-		port = 7373`)
-
-		Expect(loadDotreplit(content)).To(Equal(correctConfig))
+		[replish]`,
+		)
+		loadConfigKoanf(content)
+		Expect(globalConfig.Mode).To(Equal("client"))
 	})
-	XIt("should fail on invalid config", func() {
-		content := []byte(`broken`)
-		Expect(loadDotreplit(content))
-	})*/
+	It("should fail when client is set and remote-port is not set", func() {
+		content := []byte(
+			`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"
+		[replish]
+		mode = "client"`,
+		)
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
+	It("should fail when client is set and remote is not valid range", func() {
+		content := []byte(
+			`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"
+		[replish]
+		mode = "client"
+		remote-port = 65599`,
+		)
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
+	It("should default listen-port to zero when invalid or not set", func() {
+		content := []byte(
+			`language = "go"
+	run = "bash main.sh"
+	onBoot="bash bootstrap.sh"
+	[replish]
+	mode = "server"
+	listen-port = 65599`,
+		)
+		loadConfigKoanf(content)
+		Expect(globalConfig.Mode).To(Equal("server"))
+		Expect(globalConfig.ListenPort).To(Equal(uint16(0)))
+		content = []byte(
+			`language = "go"
+	run = "bash main.sh"
+	onBoot="bash bootstrap.sh"
+	[replish]
+	mode = "server"`,
+		)
+		loadConfigKoanf(content)
+		Expect(globalConfig.Mode).To(Equal("server"))
+		Expect(globalConfig.ListenPort).To(Equal(uint16(0)))
+	})
+	It("should fail local-port is invalid", func() {
+		content := []byte(
+			`language = "go"
+	run = "bash main.sh"
+	onBoot="bash bootstrap.sh"
+	[replish]
+	mode = "server"
+	local-port = 65599`,
+		)
+
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
 })
