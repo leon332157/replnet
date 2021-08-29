@@ -32,11 +32,11 @@ import (
 var (
 	port         uint16
 	globalConfig ReplishConfig
-	konfConf     = koanfLib.Conf{
+	koanfConfig     = koanfLib.Conf{
 		Delim:       ".",
 		StrictMerge: true,
 	}
-	koanf = koanfLib.NewWithConf(konfConf)
+	koanf = koanfLib.NewWithConf(koanfConfig)
 )
 
 const (
@@ -234,6 +234,13 @@ func checkConfig() {
 		}
 	}
 	if globalConfig.Mode == "server" { // Check that local app port is set
+		if !koanf.Exists("replish.listen-port") {
+			log.Warnln("Listen port is unset, defaulting to 0")
+			globalConfig.ListenPort = 0
+		}
+		if !koanf.Exists("replish.local-port") {
+			log.Fatalln("Local port is unset")
+		}
 
 	}
 }
