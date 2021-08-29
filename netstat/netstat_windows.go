@@ -1,3 +1,4 @@
+//go:build amd64
 // +build amd64
 
 package netstat
@@ -38,17 +39,17 @@ var (
 // Socket states
 const (
 	Close       SkState = 0x01
-	Listen              = 0x02
-	SynSent             = 0x03
-	SynRecv             = 0x04
-	Established         = 0x05
-	FinWait1            = 0x06
-	FinWait2            = 0x07
-	CloseWait           = 0x08
-	Closing             = 0x09
-	LastAck             = 0x0a
-	TimeWait            = 0x0b
-	DeleteTcb           = 0x0c
+	Listen      SkState = 0x02
+	SynSent     SkState = 0x03
+	SynRecv     SkState = 0x04
+	Established SkState = 0x05
+	FinWait1    SkState = 0x06
+	FinWait2    SkState = 0x07
+	CloseWait   SkState = 0x08
+	Closing     SkState = 0x09
+	LastAck     SkState = 0x0a
+	TimeWait    SkState = 0x0b
+	DeleteTcb   SkState = 0x0c
 )
 
 var skStates = [...]string{

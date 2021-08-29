@@ -18,7 +18,6 @@ func (s *SockAddr) String() string {
 
 // SockTabEntry type represents each line of the /proc/net/[tcp|udp]
 type SockTabEntry struct {
-	ino        string
 	LocalAddr  *SockAddr
 	RemoteAddr *SockAddr
 	State      SkState
