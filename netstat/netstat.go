@@ -1,5 +1,6 @@
 package netstat
 
+// https://github.com/nodauf/go-netstat
 import (
 	"fmt"
 	"net"
