@@ -13,6 +13,7 @@ import (
 
 	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
+	"github.com/leon332157/replish/server"
 
 	"io/ioutil"
 	"net"
@@ -27,7 +28,6 @@ import (
 )
 
 var (
-	port         uint16
 	globalConfig ReplishConfig
 	koanfConfig  = koanfLib.Conf{
 		Delim:       ".",
@@ -51,11 +51,11 @@ type DotReplit struct {
 }
 
 type ReplishConfig struct {
-	Mode           string `koanf:"mode"`        // Mode of operation
-	RemoteURL      string `koanf:"remote-url"`  // The repl.co url to connect to
-	LocalPort      uint16 `koanf:"local-port"`  // The port of your application
-	RemotePort     uint16 `koanf:"remote-port"` // The port of a remote application
-	ListenPort     uint16 `koanf:"listen-port"` // The port replish listen on for WS connection
+	Mode           string `koanf:"mode"`           // Mode of operation
+	RemoteURL      string //`koanf:"remote-url"`     // The repl.co url to connect to
+	LocalAppPort   uint16 //`koanf:"local-app-port"` // The port of your application
+	RemoteAppPort  uint16 //`koanf:"remote-port"`    // The port of a remote application
+	ListenPort     uint16 `koanf:"listen-port"`    // The port replish listen on for WS connection
 	configFilePath string
 }
 
@@ -74,8 +74,7 @@ func startBasicHttp() {
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	/*configFile := parser.String("C", "config", os.O_RDONLY, 0777, &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
+	/*mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
 	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString, Default: "https://replit.com"})
 	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
 	*/
@@ -94,10 +93,9 @@ func main() {
 	//go startBasicHttp()
 	//time.Sleep(1 * time.Second) // wait for server to come online
 	//getPort()
-	port = 8080
 	//log.Debugf("[Main] Got port: %v\n", port)
-	//go server.StartMain(7777, port)
-	go client.ConnectWS(globalConfig.RemoteURL, globalConfig.RemotePort, 10*time.Second)
+	go server.StartMain(7777, globalConfig.LocalAppPort)
+	go client.ConnectWS(globalConfig.RemoteURL, globalConfig.RemoteAppPort, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
 	if !ok {
 		log.Warn("Reading 'run' field failed")
@@ -108,13 +106,15 @@ func main() {
 	}
 }
 
-func getPortAuto() {
+func getPortAuto() uint16 {
+	var port uint16
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
 		if s.Process == nil { // Process can be nil, discard it
 			return false
 		} else if strings.Contains(s.Process.Name, "System") {
 			return false // Discard System process
 		}
+
 		return net.IP.IsLoopback(s.LocalAddr.IP) && s.State == netstat.Listen
 	})
 	if err != nil {
@@ -149,6 +149,7 @@ func getPortAuto() {
 	} else {
 		port = addrs[0].LocalAddr.Port
 	}
+	return port
 }
 
 func checkPort(p int64) uint16 {
@@ -224,40 +225,38 @@ func loadConfigKoanf(content []byte) error {
 		globalConfig.Mode = "client"
 	}
 	if globalConfig.Mode == "client" {
-		if _, err := url.ParseRequestURI(globalConfig.RemoteURL); err != nil {
+		url, err := url.ParseRequestURI(globalConfig.RemoteURL)
+		if err == nil {
+			log.Debugln(url)
+			//TODO: maybe check url speficis host and port
 			//  Check that the remote url and remote app port are set
+		} else {
 			return fmt.Errorf("remote URL is not valid: %v", err)
 		}
-		if !koanf.Exists("replish.remote-port") {
-			return fmt.Errorf("remote port is unset")
-
-		}
-		remotePort := koanf.Int64("replish.remote-port")
-		if remotePort > 65535 || remotePort < 1 {
-			return fmt.Errorf("remote port is invalid (1-65535)")
+		if koanf.Exists("replish.remote-app-port") {
+			remoteAppPort := koanf.Int64("replish.remote-app-port")
+			globalConfig.RemoteAppPort = checkPort(remoteAppPort)
+		} else {
+			return fmt.Errorf("remote application port is unset")
 		}
 	}
 	if globalConfig.Mode == "server" { // Check that local app port is set
-		if !koanf.Exists("replish.listen-port") {
+		if koanf.Exists("replish.listen-port") {
+			listenPort := koanf.Int64("replish.listen-port")
+			if listenPort > 65535 || listenPort < 0 {
+				log.Warnln("listen port is invalid (0-65535), defaulting to 0")
+				globalConfig.ListenPort = 0
+			}
+		} else {
 			log.Warnln("listen port is unset, defaulting to 0")
 			globalConfig.ListenPort = 0
 		}
-		listenPort := koanf.Int64("replish.listen-port")
-		if listenPort > 65535 || listenPort < 0 {
-			log.Warnln("listen port is invalid (0-65535), defaulting to 0")
-			globalConfig.ListenPort = 0
-		}
-		if koanf.Exists("replish.local-port") {
+
+		if koanf.Exists("replish.local-app-port") {
+			appPort := koanf.Int64("replish.app-port")
+			globalConfig.LocalAppPort = checkPort(appPort)
 		} else {
-			return fmt.Errorf("local port is not set")
-		}
-		localPort := koanf.Int64("replish.local-port")
-		if localPort == 0 {
-			//TODO: Attempt auto detect local port
-		} else {
-			if localPort > 65535 || localPort < 1 {
-				return fmt.Errorf("local port is invalid (1-65535)")
-			}
+			return fmt.Errorf("application port is not set")
 		}
 	}
 	return nil

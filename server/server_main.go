@@ -11,7 +11,10 @@ import (
 )
 
 //TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
-func StartMain(listenPort, forwardPort uint16) {
+func StartMain(listenPort, appPort uint16) {
+	if appPort == 0 {
+		log.Fatal("app port is 0")
+	}
 	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", r.URL.Path)
 	})
@@ -26,7 +29,7 @@ func StartMain(listenPort, forwardPort uint16) {
 	}
 	log.Infof("[Server Main] Listening on %v", listenPort)
 	//p := &ReverseProxy{port: port}
-	http.Serve(listener, &ReplishRouter{port: forwardPort})
+	http.Serve(listener, &ReplishRouter{port: appPort})
 	/*go func() {=
 		err := http.Serve(listener, p)
 
@@ -51,7 +54,7 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handlerDav(w, r)
 	} else if strings.HasPrefix(r.URL.Path, "/__ws") {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
-		handleWS(w,r)
+		handleWS(w, r)
 	} else {
 		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.port))
 		if err != nil {
