@@ -152,7 +152,7 @@ func parseSocktab(r io.Reader, accept AcceptFn) ([]SockTabEntry, error) {
 			return nil, err
 		}
 		e.UID = uint32(u)
-		e.ino = fields[9]
+		//e.ino = fields[9]
         extractProcInfo(&e)
 		if accept(&e) {
 			tab = append(tab, e)
@@ -202,10 +202,10 @@ func (p *procFd) iterFdDir() {
 		}
 
 			sk := p.sktab
-			ss := sockPrefix + sk.ino + "]"
-			if ss != lname {
-				continue
-			}
+			//ss := sockPrefix + sk.ino + "]"
+			//if ss != lname {
+			//	continue
+			//}
 			if p.p == nil {
 				stat, err := os.Open(path.Join(p.base, "stat"))
 				if err != nil {
