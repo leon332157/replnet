@@ -1,10 +1,18 @@
 package main
 
-//SNOW WAS HERE
+// SNOW WAS HERE
 
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/akamensky/argparse"
 	koanfLib "github.com/knadh/koanf"
@@ -14,15 +22,6 @@ import (
 	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
-
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/url"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -51,11 +50,11 @@ type DotReplit struct {
 }
 
 type ReplishConfig struct {
-	Mode           string `koanf:"mode"`           // Mode of operation
+	Mode           string `koanf:"mode"` // Mode of operation
 	RemoteURL      string //`koanf:"remote-url"`     // The repl.co url to connect to
 	LocalAppPort   uint16 //`koanf:"local-app-port"` // The port of your application
 	RemoteAppPort  uint16 //`koanf:"remote-port"`    // The port of a remote application
-	ListenPort     uint16 `koanf:"listen-port"`    // The port replish listen on for WS connection
+	ListenPort     uint16 `koanf:"listen-port"` // The port replish listen on for WS connection
 	configFilePath string
 }
 
@@ -71,6 +70,7 @@ func startBasicHttp() {
 	})
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
+
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
@@ -82,7 +82,7 @@ func main() {
 	if err != nil {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
-		//fmt.Println(err)
+		// fmt.Println(err)
 		fmt.Print(parser.Usage(err))
 		log.Exit(1)
 	}
@@ -90,10 +90,10 @@ func main() {
 	if err := loadConfigKoanf(readConfigFile(globalConfig.configFilePath)); err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
-	//go startBasicHttp()
-	//time.Sleep(1 * time.Second) // wait for server to come online
-	//getPort()
-	//log.Debugf("[Main] Got port: %v\n", port)
+	// go startBasicHttp()
+	// time.Sleep(1 * time.Second) // wait for server to come online
+	// getPort()
+	// log.Debugf("[Main] Got port: %v\n", port)
 	go server.StartMain(7777, globalConfig.LocalAppPort)
 	go client.ConnectWS(globalConfig.RemoteURL, globalConfig.RemoteAppPort, 10*time.Second)
 	/*run, ok := dotreplit.Replish["run"].(string)
@@ -154,6 +154,7 @@ func getPortAuto() uint16 {
 
 func checkPort(p int64) uint16 {
 	if p > 65535 || p < 1 {
+	
 		log.Fatalf("port %v is out of range(1-65535)", p)
 	}
 	return uint16(p)
@@ -204,7 +205,6 @@ func readConfigFile(filepath string) []byte {
 }
 
 func loadConfigKoanf(content []byte) error {
-
 	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
 	if err != nil {
 		return err
@@ -219,16 +219,18 @@ func loadConfigKoanf(content []byte) error {
 	}
 	log.Debugln(koanf.Sprint())
 	log.Debugln(globalConfig)
-	// check config
-	if globalConfig.Mode == "" {
-		log.Warnln("mode is missing, defaulting to client")
+
+	//* check mode
+	if len(globalConfig.Mode) < 4 {
+		log.Warnln("mode is missing or invalid, defaulting to client")
 		globalConfig.Mode = "client"
 	}
+	log.Infof("running as %v", globalConfig.Mode)
 	if globalConfig.Mode == "client" {
 		url, err := url.ParseRequestURI(globalConfig.RemoteURL)
 		if err == nil {
 			log.Debugln(url)
-			//TODO: maybe check url speficis host and port
+			// TODO: maybe check url speficis host and port
 			//  Check that the remote url and remote app port are set
 		} else {
 			return fmt.Errorf("remote URL is not valid: %v", err)
@@ -239,8 +241,7 @@ func loadConfigKoanf(content []byte) error {
 		} else {
 			return fmt.Errorf("remote application port is unset")
 		}
-	}
-	if globalConfig.Mode == "server" { // Check that local app port is set
+	} else if globalConfig.Mode == "server" { // Check that local app port is set
 		if koanf.Exists("replish.listen-port") {
 			listenPort := koanf.Int64("replish.listen-port")
 			if listenPort > 65535 || listenPort < 0 {
@@ -256,8 +257,10 @@ func loadConfigKoanf(content []byte) error {
 			appPort := koanf.Int64("replish.app-port")
 			globalConfig.LocalAppPort = checkPort(appPort)
 		} else {
-			return fmt.Errorf("application port is not set")
+			return fmt.Errorf("local application port is not set")
 		}
+	} else {
+		return fmt.Errorf("mode %v is invalid", globalConfig.Mode)
 	}
 	return nil
 }
