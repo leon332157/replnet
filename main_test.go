@@ -17,7 +17,7 @@ func TestReplish(t *testing.T) {
 	RunSpecs(t, "Main")
 }
 
-var _ = Describe("dotreplit loader function", func() {
+var _ = Describe("dotreplit loader function (client)", func() {
 	It("should fail on invalid toml", func() {
 		content := []byte(`broken`)
 		Expect(loadConfigKoanf(content)).ToNot(Succeed())
@@ -85,14 +85,14 @@ var _ = Describe("dotreplit loader function", func() {
 		Expect(globalConfig.Mode).To(Equal("server"))
 		Expect(globalConfig.ListenPort).To(Equal(uint16(0)))
 	})
-	It("should fail local-port is invalid", func() {
+	It("should fail when local application port is invalid", func() {
 		content := []byte(
 			`language = "go"
 	run = "bash main.sh"
 	onBoot="bash bootstrap.sh"
 	[replish]
 	mode = "server"
-	local-port = 65599`,
+	LocalAppPort = 65599`,
 		)
 
 		Expect(loadConfigKoanf(content)).ToNot(Succeed())
