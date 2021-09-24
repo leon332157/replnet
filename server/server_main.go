@@ -2,17 +2,19 @@ package server
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	. "github.com/leon332157/replish/common"
+	log "github.com/sirupsen/logrus"
 )
 
-//TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
-func StartMain(listenPort, appPort uint16) {
-	if appPort == 0 {
+// TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
+func StartMain(config *ReplishConfig) {
+
+	if config.LocalAppPort == 0 {
 		log.Fatal("app port is 0")
 	}
 	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -22,14 +24,13 @@ func StartMain(listenPort, appPort uint16) {
 	http.HandleFunc("/__dav", handlerDav)
 	*/
 	//http.FileServer(http.Dir("/home/runner/replish"))
-	listener, err := net.Listen("tcp4", fmt.Sprintf(":%v", listenPort))
-
+	listener, err := net.Listen("tcp4", fmt.Sprintf(":%v", config.ListenPort))
 	if err != nil {
 		log.Panicf("[Server Main] %s\n", err)
 	}
-	log.Infof("[Server Main] Listening on %v", listenPort)
-	//p := &ReverseProxy{port: port}
-	http.Serve(listener, &ReplishRouter{port: appPort})
+	log.Infof("[Server Main] Listening on %v", config.ListenPort)
+	// p := &ReverseProxy{port: port}
+	http.Serve(listener, &ReplishRouter{port: config.LocalAppPort})
 	/*go func() {=
 		err := http.Serve(listener, p)
 
@@ -49,10 +50,11 @@ type ReplishRouter struct {
 }
 
 func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/__dav") {
+	path := r.URL.Path
+	if strings.HasPrefix(path, "/__dav") {
 		log.Debug("[Server Router] Match /__dav, passing to webdav")
 		handlerDav(w, r)
-	} else if strings.HasPrefix(r.URL.Path, "/__ws") {
+	} else if strings.HasPrefix(path, "/__ws") {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
 		handleWS(w, r)
 	} else {

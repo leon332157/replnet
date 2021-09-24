@@ -35,7 +35,7 @@ var _ = BeforeSuite(func() {
 	_, rawPort, _ := net.SplitHostPort(ghttpServer.Addr())
 	intPort, _ := strconv.Atoi(rawPort)
 	go server.StartForwardServer(uint16(intPort))
-	go server.StartMain(8484, uint16(intPort))
+	//go server.StartMain(8484, uint16(intPort))
 	time.Sleep(2 * time.Second)})
 var _ = AfterSuite(func() {
 	ghttpServer.Close()
