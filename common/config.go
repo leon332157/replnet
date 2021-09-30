@@ -23,13 +23,13 @@ func checkPort(p int64) (uint16, error) {
 	return uint16(p), nil
 }
 
-// check config checks for required fields when in different modes 
+// check config checks for required fields when in different modes
 func (c *ReplishConfig) checkConfig() error {
 	switch c.Mode {
 	case "client":
 		url, err := url.ParseRequestURI(c.RemoteURL)
 		if err == nil {
-			log.Debugln(url)
+			log.Debugf("RemoteURL: %v", url)
 			// TODO: maybe check url speficis host and port
 		} else {
 			return fmt.Errorf("remote URL is not valid: %v", err)

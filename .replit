@@ -1,7 +1,7 @@
 language = "nix"
 run = "bash main.sh"
-onBoot="bash bootstrap.sh"
+onBoot = "bash bootstrap.sh"
 [replish]
-mode = "client"
-remoteURL="http://localhost:"
-remote-port="65535"
+mode = "server"
+local-app-port = 7777            # needs to be adjusted because ssh needs to be factored in 
+remote-url = "http://localhost:"

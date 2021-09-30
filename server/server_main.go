@@ -2,20 +2,20 @@ package server
 
 import (
 	"fmt"
+	"github.com/leon332157/replish/common"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
-	. "github.com/leon332157/replish/common"
-	log "github.com/sirupsen/logrus"
 )
 
 // TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
-func StartMain(config *ReplishConfig) {
-
+func StartMain(config *common.ReplishConfig) {
+	// check server configs
 	if config.LocalAppPort == 0 {
-		log.Fatal("app port is 0")
+		log.Fatal("[Server Config] local app port is 0❓❓")
 	}
 	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", r.URL.Path)
@@ -28,9 +28,9 @@ func StartMain(config *ReplishConfig) {
 	if err != nil {
 		log.Panicf("[Server Main] %s\n", err)
 	}
-	log.Infof("[Server Main] Listening on %v", config.ListenPort)
+	log.Infof("[Server Main] Listening on %v", listener.Addr().String())
 	// p := &ReverseProxy{port: port}
-	http.Serve(listener, &ReplishRouter{port: config.LocalAppPort})
+	http.Serve(listener, &ReplishRouter{config: config})
 	/*go func() {=
 		err := http.Serve(listener, p)
 
@@ -46,7 +46,7 @@ func StartMain(config *ReplishConfig) {
 }
 
 type ReplishRouter struct {
-	port uint16
+	config *common.ReplishConfig
 }
 
 func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
 		handleWS(w, r)
 	} else {
-		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.port))
+		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.LocalAppPort))
 		if err != nil {
 			log.Fatalf("[Server Router] Formatting url failed!")
 		}
