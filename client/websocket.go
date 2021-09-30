@@ -40,12 +40,13 @@ func keepAlive(c *websocket.Conn) {
 	}
 }
 
-func ConnectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	/*  if remoteUrl == "" {
 		log.Fatalf("[Websocket Client] remoteUrl is empty")
 		return
 	}*/
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
+	log.Debugf("[Websocket Client] Connecting to %v", remoteUrl)
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	//defer cancel()
 	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws", remoteUrl), &websocket.DialOptions{HTTPClient: &httpClient})

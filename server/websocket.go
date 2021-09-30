@@ -16,7 +16,10 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("[WS handler] recvd")
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		log.Errorf("[Websocker Handler] Accept err: %v\n", err)
+		log.Errorf("[Websocket Handler] Accept from %v err: %v\n", r.RemoteAddr, err)
+		return
+	} else {
+		log.Debugf("[Websocket Handler] Accepted from %v", r.RemoteAddr)
 	}
 	go func() {
 		for {

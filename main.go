@@ -3,14 +3,14 @@ package main
 // SNOW WAS HERE
 
 import (
-	"bufio"
+	_ "bufio"
 	"fmt"
 	"io/ioutil"
-	"net"
+	_ "net"
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
+	_ "strconv"
 	"strings"
 	"time"
 
@@ -19,9 +19,9 @@ import (
 	koanfToml "github.com/knadh/koanf/parsers/toml"
 	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
 
-	//"github.com/leon332157/replish/client"
+	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/common"
-	"github.com/leon332157/replish/netstat"
+	_ "github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
 
 	log "github.com/sirupsen/logrus"
@@ -37,9 +37,10 @@ var (
 )
 
 const (
-	ModeHelpString = "Mode of operation, can be client or server"
-	UrlHelpString  = "URL of the repl (repl.co link)"
-	ConfHelpString = "Path to config file"
+	ModeHelpString     = "Mode of operation, can be client or server"
+	UrlHelpString      = "URL of the repl (repl.co link)"
+	ConfHelpString     = "Path to config file"
+	LogLevelHelpString = "Level for logging"
 )
 
 type DotReplit struct {
@@ -67,6 +68,8 @@ func startBasicHttp() {
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
+	logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
+	server.UNUSED(logLevel)
 	/*mode := parser.Selector(
 		"m",
 		"mode",
@@ -93,11 +96,10 @@ func main() {
 	// go startBasicHttp()
 	// time.Sleep(1 * time.Second) // wait for server to come online
 	// getPort()
-	// log.Debugf("[Main] Got port: %v\n", port)
 	log.Infof("running as %v", globalConfig.Mode)
 	switch globalConfig.Mode {
 	case "client":
-		// TODO: go client.StartMain(&globalConfig)
+		go client.StartMain(&globalConfig)
 	case "server":
 		go server.StartMain(&globalConfig)
 	}
@@ -106,6 +108,7 @@ func main() {
 	}
 }
 
+/*
 func getPortAuto() uint16 {
 	var port uint16
 	addrs, err := netstat.TCPSocks(func(s *netstat.SockTabEntry) bool {
@@ -159,7 +162,7 @@ func checkPort(p int64) uint16 {
 	return uint16(p)
 }
 
-/*
+
 func getPort() {
 	log.Debug("Getting port")
 	rawPort, ok := //dotreplit.Replish["port"] // Check if port exist
@@ -226,17 +229,16 @@ func loadConfigKoanf(content []byte) error {
 
 	switch globalConfig.Mode {
 	case "client":
-		url, err := url.ParseRequestURI(globalConfig.RemoteURL)
-		if err == nil {
-			log.Debugln(url)
-			// TODO: maybe check url includes both host and port
-			//  Check that the remote url and remote app port are set
-		} else {
-			return fmt.Errorf("remote URL is not valid: %v", err)
+		_, err := url.ParseRequestURI(globalConfig.RemoteURL)
+		if err != nil {
+			return fmt.Errorf("remote URL is invalid: %v", err)
 		}
 		if koanf.Exists("replish.remote-app-port") {
 			remoteAppPort := koanf.Int64("replish.remote-app-port")
-			globalConfig.RemoteAppPort = checkPort(remoteAppPort)
+			if remoteAppPort > 65535 || remoteAppPort < 1 {
+				return fmt.Errorf("remote app port %v is invalid (1-65535)", remoteAppPort)
+			}
+			globalConfig.RemoteAppPort = uint16(remoteAppPort)
 		} else {
 			return fmt.Errorf("remote application port is unset")
 		}
