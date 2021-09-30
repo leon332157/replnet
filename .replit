@@ -2,6 +2,6 @@ language = "nix"
 run = "bash main.sh"
 onBoot="bash bootstrap.sh"
 [replish]
-mode = "server"
+mode = "client"
 remoteURL="http://localhost:"
 remote-port="65535"

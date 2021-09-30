@@ -20,9 +20,9 @@ import (
 	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
 
 	//"github.com/leon332157/replish/client"
+	. "github.com/leon332157/replish/common"
 	"github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
-	. "github.com/leon332157/replish/common"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -50,12 +50,11 @@ type DotReplit struct {
 	Replish  ReplishConfig `koanf:"replish"`
 }
 
-
-
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(false)
 	log.SetLevel(log.DebugLevel)
+	log.Println(globalConfig)
 }
 
 func startBasicHttp() {
@@ -68,10 +67,15 @@ func startBasicHttp() {
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	/*mode := parser.Selector("m", "mode", []string{"c", "client", "s", "server"}, &argparse.Options{Help: ModeHelpString, Default: "client"})
-	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString, Default: "https://replit.com"})
+	mode := parser.Selector(
+		"m",
+		"mode",
+		[]string{"c", "client", "s", "server"},
+		&argparse.Options{Help: ModeHelpString, Default: "client"},
+	)
+	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString, Default: nil})
 	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
-	*/
+	server.UNUSED(mode, replUrl, listenPort)
 	err := parser.Parse(os.Args)
 	if err != nil {
 		// In case of error print error and print usage
@@ -214,7 +218,7 @@ func loadConfigKoanf(content []byte) error {
 	log.Debugln(koanf.Sprint())
 	log.Debugln(globalConfig)
 
-	//* check mode
+	// check mode
 	if len(globalConfig.Mode) < 4 {
 		log.Warnln("mode is missing or invalid, defaulting to client")
 		globalConfig.Mode = "client"
@@ -249,6 +253,7 @@ func loadConfigKoanf(content []byte) error {
 		}
 
 		if koanf.Exists("replish.local-app-port") {
+
 			appPort := koanf.Int64("replish.app-port")
 			globalConfig.LocalAppPort = checkPort(appPort)
 		} else {
