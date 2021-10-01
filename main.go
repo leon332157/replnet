@@ -97,7 +97,7 @@ func main() {
 	// time.Sleep(1 * time.Second) // wait for server to come online
 	// getPort()
 	log.Infof("running as %v", globalConfig.Mode)
-	switch globalConfig.Mode {
+	switch strings.ToLower(globalConfig.Mode) {
 	case "client":
 		go client.StartMain(&globalConfig)
 	case "server":
@@ -227,7 +227,7 @@ func loadConfigKoanf(content []byte) error {
 	log.Debugln(koanf.Sprint())
 	log.Debugln(globalConfig)
 
-	switch globalConfig.Mode {
+	switch strings.ToLower(globalConfig.Mode) {
 	case "client":
 		_, err := url.ParseRequestURI(globalConfig.RemoteURL)
 		if err != nil {
