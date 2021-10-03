@@ -49,7 +49,7 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	log.Debugf("[Websocket Client] Connecting to %v", remoteUrl)
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	//defer cancel()
-	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws", remoteUrl), &websocket.DialOptions{HTTPClient: &httpClient})
+	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}

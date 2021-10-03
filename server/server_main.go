@@ -15,7 +15,7 @@ import (
 func StartMain(config *common.ReplishConfig) {
 	// check server configs
 	if config.LocalAppPort == 0 {
-		log.Fatal("[Server Config] local app port is 0❓❓")
+		log.Debug("[Server Config] local app port is 0❓❓")
 	}
 	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", r.URL.Path)

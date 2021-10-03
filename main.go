@@ -255,14 +255,14 @@ func loadConfigKoanf(content []byte) error {
 			log.Warnln("listen port is unset, defaulting to 0")
 		}
 
-		if koanf.Exists("replish.local-app-port") {
+		/*if koanf.Exists("replish.local-app-port") {
 			appPort := koanf.Int64("replish.local-app-port") // read int64 because fool proof
 			if appPort > 65535 || appPort < 1 {
 				return fmt.Errorf("local app port is invalid (1-65535)")
 			}
 		} else {
 			return fmt.Errorf("local application port is not set")
-		}
+		}*/
 	default:
 		var prediction string
 		if strings.ContainsAny(globalConfig.Mode, "svr") {

@@ -4,5 +4,5 @@ onBoot = "bash bootstrap.sh"
 [replish]
 mode = "SERVER"
 remote-app-port = 8080
-local-app-port = 7777            # needs to be adjusted because ssh needs to be factored in 
+#local-app-port = 7777            # needs to be adjusted because ssh needs to be factored in 
 remote-url = "http://localhost:"
