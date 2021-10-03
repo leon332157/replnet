@@ -1,5 +1,5 @@
 build:
-	go build -o bin/replish
+	go build -ldflags="-s -w" -o bin/replish
 	./bin/replish
 
 clean:
