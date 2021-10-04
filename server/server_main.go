@@ -63,6 +63,10 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Fatalf("[Server Router] Formatting url failed!")
 		}
 		proxy := httputil.NewSingleHostReverseProxy(localUrl)
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Errorf("[Server Router] %s", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		proxy.ServeHTTP(w, r)
 	}
 }

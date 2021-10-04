@@ -61,6 +61,7 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 			log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
 			if err != nil {
 				c.Close(websocket.StatusInternalError, err.Error())
+				return
 			}
 			//time.Sleep(1000*time.Millisecond)
 		}
