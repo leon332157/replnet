@@ -69,6 +69,7 @@ func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
 	logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
+	serverFlag := parser.Flag("", "server", nil)
 	server.UNUSED(logLevel)
 	/*mode := parser.Selector(
 		"m",
@@ -90,7 +91,13 @@ func main() {
 		log.Exit(1)
 	}
 	globalConfig.ConfigFilePath = *configFilePath
-	if err := loadConfigKoanf(readConfigFile(globalConfig.ConfigFilePath)); err != nil {
+	var content []byte
+	if *serverFlag {
+		content = []byte("[replish]\nmode = 'server'\nremote-app-port = 8080\nlisten-port = 9999")
+	} else {
+		content = readConfigFile(globalConfig.ConfigFilePath)
+	}
+	if err := loadConfigKoanf(content); err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
 	// go startBasicHttp()

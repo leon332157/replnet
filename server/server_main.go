@@ -15,7 +15,7 @@ import (
 func StartMain(config *common.ReplishConfig) {
 	// check server configs
 	if config.LocalAppPort == 0 {
-		log.Debug("[Server Config] local app port is 0❓❓")
+		log.Warnln("[Server Config] local app port is 0, running without reverse proxy")
 	}
 	/*http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q", r.URL.Path)
@@ -58,13 +58,14 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
 		handleWS(w, r)
 	} else {
+		//TODO: check reverse proxy flag or check for port
 		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.LocalAppPort))
 		if err != nil {
 			log.Fatalf("[Server Router] Formatting url failed!")
 		}
 		proxy := httputil.NewSingleHostReverseProxy(localUrl)
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			log.Errorf("[Server Router] %s", err)
+			log.Errorf("[Server Reverse Proxy] %s", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		proxy.ServeHTTP(w, r)

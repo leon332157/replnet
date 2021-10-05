@@ -2,7 +2,8 @@ language = "nix"
 run = "bash main.sh"
 onBoot = "bash bootstrap.sh"
 [replish]
-mode = "server"
+mode = "client"
 remote-app-port = 8080
+listen-port = 9999
 #local-app-port = 7777            # needs to be adjusted because ssh needs to be factored in 
-remote-url = "https://replish.leon332157.repl.co"
+remote-url = "http://127.0.0.1:9999"
