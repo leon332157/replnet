@@ -68,9 +68,9 @@ func startBasicHttp() {
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
+	//logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
 	serverFlag := parser.Flag("", "server", nil)
-	server.UNUSED(logLevel)
+	//server.UNUSED(logLevel)
 	/*mode := parser.Selector(
 		"m",
 		"mode",

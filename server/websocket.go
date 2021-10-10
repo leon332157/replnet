@@ -12,21 +12,6 @@ import (
 	//"strings"
 )
 
-func UNUSED(x ...interface{}) {
-}
-
-func flush(socketConn net.Conn, wsConn websocket.Conn) {
-	for {
-		buf := make([]byte, 1024)
-		n, err := socketConn.Read(buf)
-		if err != nil {
-			log.Errorf("[Websocket Handler] Read from %v err: %v\n", socketConn.RemoteAddr(), err)
-			wsConn.Close(websocket.StatusInternalError, fmt.Sprintf("Read from %v err: %v\n", socketConn.RemoteAddr(), err))
-			return
-		}
-		wsConn.Write(context.Background(), websocket.MessageBinary, buf[:n])
-	}
-}
 func handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("[WS handler] recvd")
 	stringPort := r.URL.Query().Get("remoteAppPort")

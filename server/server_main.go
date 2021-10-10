@@ -30,7 +30,6 @@ func StartMain(config *common.ReplishConfig) {
 	}
 	log.Infof("[Server Main] Listening on %v", listener.Addr().String())
 	// p := &ReverseProxy{port: port}
-	go StartEchoServer()
 	http.Serve(listener, &ReplishRouter{config: config})
 
 	/*go func() {=
