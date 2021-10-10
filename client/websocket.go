@@ -17,7 +17,7 @@ var (
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
-			KeepAlive: time.Second,
+			KeepAlive: 3 * time.Second,
 		}).DialContext,
 		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          5,
@@ -44,7 +44,7 @@ func keepAlive(c *websocket.Conn) {
 	}
 }
 
-func wsToSock(ws *websocket.Conn) {
+func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
 		msgtype, data, err := ws.Read(context.Background())
 		log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
@@ -52,31 +52,49 @@ func wsToSock(ws *websocket.Conn) {
 			ws.Close(websocket.StatusInternalError, err.Error())
 			return
 		}
-		wsToSockChannel <- data
+		written, err := sock.Write(data)
+		if err != nil {
+			log.Debugf("[WS Client] Write failed: %v", err)
+			return
+		} else {
+			log.Debugf("[Websocket Client] flushed %v to sock", written)
+		}
+		//wsToSockChannel <- data
 	}
 }
 
-func sockToWs(c net.Conn) {
-	defer c.Close()
+func sockToWs(ws *websocket.Conn, sock net.Conn) {
+	defer sock.Close()
 	for {
 		buf := make([]byte, 1024)
-		recvd, err := c.Read(buf)
+		recvd, err := sock.Read(buf)
 		if err != nil {
 			log.Debugf("[Websocket Client] Read failed: %v", err)
 			return
 		}
-		sockToWSChannel <- buf[:recvd]
-		log.Debugf("[Websocket Client] flushed %v to channel", recvd)
+		//sockToWSChannel <- buf[:recvd]
+		err = ws.Write(context.Background(), websocket.MessageBinary, buf[:recvd])
+		if err != nil {
+			log.Debugf("[Websocket Client] Write failed: %v", err)
+			return
+		} else {
+			log.Debugf("[Websocket Client] flushed %v to channel", recvd)
+		}
 	}
 }
 
+/*
 func handleSocketConn(sock net.Conn, ws *websocket.Conn) {
-	go sockToWs(sock)
 	defer sock.Close()
 	for {
 		select {
 		case data := <-wsToSockChannel:
-			sock.Write(data)
+			written, err := sock.Write(data)
+			if err != nil {
+				log.Debugf("[Websocket Client] Write failed: %v", err)
+			} else {
+				log.Debugf("[Websocket Client] flushed %v to socket", written)
+			}
 		case data := <-sockToWSChannel:
 			ws.Write(context.Background(), websocket.MessageBinary, data)
 		default:
@@ -86,11 +104,11 @@ func handleSocketConn(sock net.Conn, ws *websocket.Conn) {
 			}
 			//log.Debugf("[WS Client] ping")
 		}
-		time.Sleep(1 * time.Millisecond)
+		//time.Sleep(1 * time.Millisecond)
 
 	}
 }
-
+*/
 func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	/*  if remoteUrl == "" {
 		log.Fatalf("[Websocket Client] remoteUrl is empty")
@@ -99,7 +117,7 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
 	log.Debugf("[Websocket Client] Connecting to %v", remoteUrl)
 	ctx := context.Background() //context.WithTimeout(context.Background(), timeout)
-	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
+	ws, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
@@ -110,15 +128,18 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 		log.Debugf("[Websocket Client] Listen failed: %v", err)
 	}
 	log.Debugf("[Websocket Client] Local listener created")
-	go wsToSock(c)
+
 	for {
-		conn, err := listener.Accept()
+		sock, err := listener.Accept()
 		if err != nil {
 			log.Debugf("[Websocket Client] Accept failed: %v", err)
 		} else {
-			log.Debugf("[Websocket Client] Accepted from: %v", conn.RemoteAddr())
+			log.Debugf("[Websocket Client] Accepted from: %v", sock.RemoteAddr())
 		}
-		go handleSocketConn(conn, c)
+		//go handleSocketConn(conn, c)
+		go wsToSock(ws, sock)
+		go sockToWs(ws, sock)
+
 	}
 	//c.Write(ctx,websocket.MessageText,[]byte("Test"))
 	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
