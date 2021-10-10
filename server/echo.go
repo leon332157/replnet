@@ -10,7 +10,7 @@ import (
 // main serves as the program entry point
 func StartEchoServer() {
 	// obtain the port and prefix via program arguments
-	port := "127.0.0.1:8181"
+	port := "0.0.0.0:8181"
 	prefix := "test"
 
 	// create a tcp listener on the given port

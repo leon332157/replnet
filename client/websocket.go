@@ -12,19 +12,23 @@ import (
 	"nhooyr.io/websocket"
 )
 
-var transport = &http.Transport{
-	Proxy: http.ProxyFromEnvironment,
-	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: time.Second,
-	}).DialContext,
-	ForceAttemptHTTP2:     true,
-	MaxIdleConns:          5,
-	IdleConnTimeout:       30 * time.Second,
-	TLSHandshakeTimeout:   10 * time.Second,
-	ExpectContinueTimeout: 1 * time.Second,
-}
-var httpClient = http.Client{Transport: transport}
+var (
+	transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          5,
+		IdleConnTimeout:       30 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	httpClient      = http.Client{Transport: transport}
+	wsToSockChannel = make(chan []byte)
+	sockToWSChannel = make(chan []byte)
+)
 
 func keepAlive(c *websocket.Conn) {
 	for {
@@ -40,6 +44,53 @@ func keepAlive(c *websocket.Conn) {
 	}
 }
 
+func wsToSock(ws *websocket.Conn) {
+	for {
+		msgtype, data, err := ws.Read(context.Background())
+		log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
+		if err != nil {
+			ws.Close(websocket.StatusInternalError, err.Error())
+			return
+		}
+		wsToSockChannel <- data
+	}
+}
+
+func sockToWs(c net.Conn) {
+	defer c.Close()
+	for {
+		buf := make([]byte, 1024)
+		recvd, err := c.Read(buf)
+		if err != nil {
+			log.Debugf("[Websocket Client] Read failed: %v", err)
+			return
+		}
+		sockToWSChannel <- buf[:recvd]
+		log.Debugf("[Websocket Client] flushed %v to channel", recvd)
+	}
+}
+
+func handleSocketConn(sock net.Conn, ws *websocket.Conn) {
+	go sockToWs(sock)
+	defer sock.Close()
+	for {
+		select {
+		case data := <-wsToSockChannel:
+			sock.Write(data)
+		case data := <-sockToWSChannel:
+			ws.Write(context.Background(), websocket.MessageBinary, data)
+		default:
+			if err := ws.Ping(context.Background()); err != nil {
+				log.Debugf("[WS Client] Ping failed: %v", err)
+				return
+			}
+			//log.Debugf("[WS Client] ping")
+		}
+		time.Sleep(1 * time.Millisecond)
+
+	}
+}
+
 func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	/*  if remoteUrl == "" {
 		log.Fatalf("[Websocket Client] remoteUrl is empty")
@@ -47,15 +98,32 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	}*/
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
 	log.Debugf("[Websocket Client] Connecting to %v", remoteUrl)
-	ctx, _ := context.WithTimeout(context.Background(), timeout)
-	//defer cancel()
+	ctx := context.Background() //context.WithTimeout(context.Background(), timeout)
 	c, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
+	log.Debugf("[Websocket Client] Connected to %v", remoteUrl)
+
+	listener, err := net.Listen("tcp", "0.0.0.0:8888") // fmt.Sprintf(":%v", remotePort))
+	if err != nil {
+		log.Debugf("[Websocket Client] Listen failed: %v", err)
+	}
+	log.Debugf("[Websocket Client] Local listener created")
+	go wsToSock(c)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Debugf("[Websocket Client] Accept failed: %v", err)
+		} else {
+			log.Debugf("[Websocket Client] Accepted from: %v", conn.RemoteAddr())
+		}
+		go handleSocketConn(conn, c)
+	}
 	//c.Write(ctx,websocket.MessageText,[]byte("Test"))
 	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
-	go func() {
+
+	/*go func() {
 		for {
 			msgtype, data, err := c.Read(context.Background())
 			log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
@@ -63,9 +131,9 @@ func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 				c.Close(websocket.StatusInternalError, err.Error())
 				return
 			}
-			//time.Sleep(1000*time.Millisecond)
+			//time.Sleep(1000*time.Mill isecond)
 		}
-	}()
+	}()*/
 	//go keepAlive(c)
 	//c.Close(websocket.StatusNormalClosure, "")
 }
