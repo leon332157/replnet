@@ -7,7 +7,7 @@ import socket
 
 
 # Define socket host and port
-SERVER_HOST = '0.0.0.0'
+SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 7777
 
 # Create socket
@@ -26,7 +26,7 @@ while True:
     print(request)
 
     # Send HTTP response
-    response = 'HTTP/1.0 200 OK\n\nHello World'
+    response = 'HTTP/1.0 200 OK\r\n\r\nHello World\r\n'
     client_connection.sendall(response.encode())
     client_connection.close()
 

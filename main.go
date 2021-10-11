@@ -53,7 +53,7 @@ type DotReplit struct {
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-	log.SetReportCaller(false)
+	log.SetReportCaller(true)
 	log.SetLevel(log.DebugLevel)
 	log.Println(globalConfig)
 }
@@ -93,7 +93,7 @@ func main() {
 	globalConfig.ConfigFilePath = *configFilePath
 	var content []byte
 	if *serverFlag {
-		content = []byte("[replish]\nmode = 'server'\nremote-app-port = 8080\nlisten-port = 9999")
+		content = []byte("[replish]\nmode = 'server'\nlocal-http-port=8080\nlisten-port = 9999")
 	} else {
 		content = readConfigFile(globalConfig.ConfigFilePath)
 	}
@@ -262,14 +262,15 @@ func loadConfigKoanf(content []byte) error {
 			log.Warnln("listen port is unset, defaulting to 0")
 		}
 
-		/*if koanf.Exists("replish.local-app-port") {
-			appPort := koanf.Int64("replish.local-app-port") // read int64 because fool proof
+		if koanf.Exists("replish.local-http-port") {
+			appPort := koanf.Int64("replish.local-http-port") // read int64 because fool proof
 			if appPort > 65535 || appPort < 1 {
-				return fmt.Errorf("local app port is invalid (1-65535)")
+				return fmt.Errorf("local http port is invalid (1-65535)")
 			}
+			globalConfig.LocalHttpPort = uint16(appPort)
 		} else {
-			return fmt.Errorf("local application port is not set")
-		}*/
+			log.Warn("local http port is not set")
+		}
 	default:
 		var prediction string
 		if strings.ContainsAny(globalConfig.Mode, "svr") {

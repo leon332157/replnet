@@ -9,8 +9,39 @@ import (
 	"net/http"
 	websocket "nhooyr.io/websocket"
 	"strconv"
+	"io"
 	//"strings"
 )
+
+func sockToWs(ws *websocket.Conn, sock net.Conn) {
+for {
+			buf := make([]byte, 256)
+			n, err := sock.Read(buf)
+			if err != nil {
+				if err != io.EOF{
+				log.Errorf("[Websocket Handler] Read socket from %v err: %v\n", sock.RemoteAddr, err)
+				//sock.Close()
+				//ws.Close(websocket.StatusInternalError, err.Error())
+				ws.Write(context.Background(), websocket.MessageBinary, []byte("baf"))
+				}
+				return
+			}
+			ws.Write(context.Background(), websocket.MessageBinary, buf[:n])
+		}
+}
+
+func wsToSock(ws *websocket.Conn, sock net.Conn) {
+	for {
+			_, data, err := ws.Read(context.Background())
+			log.Debugf("[WS handler] data: %s err: %v", data, err)
+			if err != nil {
+				//c.Close(websocket.StatusInternalError, fmt.Sprintf("[Websocker Handler] Read err: %v", err))
+				return
+			}
+			sock.Write(data)
+			//time.Sleep(1000*time.Millisecond)
+		}
+}
 
 func handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("[WS handler] recvd")
@@ -24,7 +55,7 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	port := uint16(intPort)
 	log.Debugf("[WS handler] remoteAppPort: %d", port)
-	c, err := websocket.Accept(w, r, nil)
+	ws, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Errorf("[Websocket Handler] Accept from %v err: %v\n", r.RemoteAddr, err)
 		return
@@ -34,37 +65,12 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", port))
 	if err != nil {
 		log.Errorf("[Websocket Handler] Dial to %v err: %v\n", port, err)
-		c.Close(websocket.StatusInternalError, err.Error())
+		ws.Close(websocket.StatusInternalError, err.Error())
 		return
 	}
-
-	go func() {
-		for {
-			buf := make([]byte, 1024)
-			n, err := conn.Read(buf)
-			if err != nil {
-				log.Errorf("[Websocket Handler] Read socket from %v err: %v\n", r.RemoteAddr, err)
-				conn.Close()
-				c.Close(websocket.StatusInternalError, err.Error())
-				return
-			}
-			c.Write(context.Background(), websocket.MessageBinary, buf[:n])
-		}
-	}()
-
-	go func() {
-		for {
-			msgtype, data, err := c.Read(context.Background())
-			log.Debugf("[WS handler] type: %s data: %s err: %v", msgtype, data, err)
-			if err != nil {
-				c.Close(websocket.StatusInternalError, fmt.Sprintf("[Websocker Handler] Read err: %v", err))
-				return
-			}
-			if msgtype == websocket.MessageBinary {
-				conn.Write(data)
-			}
-			//time.Sleep(1000*time.Millisecond)
-		}
-	}()
+	//io.Copy(ws,conn)
+	//io.Copy(conn,ws)
+	go sockToWs(ws, conn)
+    go wsToSock(ws, conn)
 	//c.Close(websocket.StatusNormalClosure, "")
 }
