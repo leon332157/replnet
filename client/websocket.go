@@ -46,12 +46,15 @@ func keepAlive(c *websocket.Conn) {
 
 func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
-		msgtype, data, err := ws.Read(context.Background())
-		log.Debugf("[WS Client] type: %s data: %s err: %v", msgtype, data, err)
+		defer sock.Close()
+		_, data, err := ws.Read(context.Background())
+		log.Debugf("[WS Client] data: %s err: %v", data, err)
+
 		if err != nil {
 			ws.Close(websocket.StatusInternalError, err.Error())
 			return
 		}
+		
 		written, err := sock.Write(data)
 		if err != nil {
 			log.Debugf("[WS Client] Write failed: %v", err)
@@ -59,6 +62,7 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 		} else {
 			log.Debugf("[Websocket Client] flushed %v to sock", written)
 		}
+		//if 
 		//wsToSockChannel <- data
 	}
 }
