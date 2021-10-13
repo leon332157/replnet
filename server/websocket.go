@@ -18,11 +18,14 @@ for {
 			buf := make([]byte, 256)
 			n, err := sock.Read(buf)
 			if err != nil {
-				if err != io.EOF{
+				if err == io.EOF{
+					ws.Close(websocket.StatusBadGateway,"EOF")
+					sock.Close()
+				}else{
 				log.Errorf("[Websocket Handler] Read socket from %v err: %v\n", sock.RemoteAddr, err)
 				//sock.Close()
 				//ws.Close(websocket.StatusInternalError, err.Error())
-				ws.Write(context.Background(), websocket.MessageBinary, []byte("baf"))
+				//ws.Write(context.Background(), websocket.MessageBinary, []byte("baf"))
 				}
 				return
 			}

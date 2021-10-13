@@ -93,7 +93,7 @@ func main() {
 	globalConfig.ConfigFilePath = *configFilePath
 	var content []byte
 	if *serverFlag {
-		content = []byte("[replish]\nmode = 'server'\nlocal-http-port=8080\nlisten-port = 9999")
+		content = []byte("[replish]\nmode = 'server'\nlocal-http-port=7777\nlisten-port = 9999")
 	} else {
 		content = readConfigFile(globalConfig.ConfigFilePath)
 	}
