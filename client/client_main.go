@@ -16,5 +16,5 @@ func StartMain(config *common.ReplishConfig) {
 		log.Fatalf("[Client Config] remote app port is 0??")
 	}
 	log.Debugf("[Client Config] remote app port %v", config.RemoteAppPort)
-	connectWS(config.RemoteURL, config.RemoteAppPort, 10*time.Second)
+	startWS(config.RemoteURL, config.RemoteAppPort, 10*time.Second)
 }

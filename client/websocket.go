@@ -25,36 +25,20 @@ var (
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-	httpClient      = http.Client{Transport: transport}
-	wsToSockChannel = make(chan []byte)
-	sockToWSChannel = make(chan []byte)
+	httpClient = http.Client{Transport: transport}
 )
-
-func keepAlive(c *websocket.Conn) {
-	for {
-		timeout, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		err := c.Ping(timeout)
-		//c.Write(timeout,websocket.MessageText,[]byte("PING"))
-		log.Debugln("[Websocket Client] Keep alive")
-		if err != nil {
-			log.Debugf("[Websocket Client] Keep alive err: %s\n", err)
-
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
 
 func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
 		defer sock.Close()
 		_, data, err := ws.Read(context.Background())
 		log.Debugf("[WS Client] data: %s err: %v", data, err)
-
 		if err != nil {
+			log.Error("[Ws Client] read from remote error: ", err)
 			ws.Close(websocket.StatusInternalError, err.Error())
 			return
 		}
-		
+
 		written, err := sock.Write(data)
 		if err != nil {
 			log.Debugf("[WS Client] Write failed: %v", err)
@@ -62,7 +46,7 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 		} else {
 			log.Debugf("[Websocket Client] flushed %v to sock", written)
 		}
-		//if 
+		//if
 		//wsToSockChannel <- data
 	}
 }
@@ -113,7 +97,7 @@ func handleSocketConn(sock net.Conn, ws *websocket.Conn) {
 	}
 }
 */
-func connectWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+func startWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	/*  if remoteUrl == "" {
 		log.Fatalf("[Websocket Client] remoteUrl is empty")
 		return
