@@ -1,6 +1,6 @@
 { pkgs }: {
 	deps = [
-    pkgs.go_1_16
+    pkgs.go
 	pkgs.python39Full
 	];
 }
