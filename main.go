@@ -249,6 +249,15 @@ func loadConfigKoanf(content []byte) error {
 		} else {
 			return fmt.Errorf("remote application port is unset")
 		}
+		if koanf.Exists("replish.local-app-port") {
+			localAppPort := koanf.Int64("replish.local-app-port")
+			if localAppPort > 65535 || localAppPort < 1 {
+				return fmt.Errorf("local app port %v is invalid (1-65535)", localAppPort)
+			}
+			globalConfig.LocalAppPort = uint16(localAppPort)
+		} else {
+			globalConfig.LocalAppPort = globalConfig.RemoteAppPort
+		}
 	case "server":
 		if koanf.Exists("replish.listen-port") {
 			listenPort := koanf.Int64("replish.listen-port")

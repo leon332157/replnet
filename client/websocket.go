@@ -97,7 +97,7 @@ func handleSocketConn(sock net.Conn, ws *websocket.Conn) {
 	}
 }
 */
-func startWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
+func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time.Duration) {
 	/*  if remoteUrl == "" {
 		log.Fatalf("[Websocket Client] remoteUrl is empty")
 		return
@@ -111,11 +111,11 @@ func startWS(remoteUrl string, remotePort uint16, timeout time.Duration) {
 	}
 	log.Debugf("[Websocket Client] Connected to %v", remoteUrl)
 
-	listener, err := net.Listen("tcp", "0.0.0.0:8888") // fmt.Sprintf(":%v", remotePort))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", localPort))
 	if err != nil {
 		log.Debugf("[Websocket Client] Listen failed: %v", err)
 	}
-	log.Debugf("[Websocket Client] Local listener created")
+	log.Debugf("[Websocket Client] Local listener created on %v", listener.Addr())
 
 	for {
 		sock, err := listener.Accept()

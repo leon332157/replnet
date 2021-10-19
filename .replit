@@ -4,6 +4,7 @@ onBoot = "bash bootstrap.sh"
 [replish]
 mode = "client"
 remote-app-port = 7777
-local-http-port = 7777            # needs to be adjusted because ssh needs to be factored in 
+local-http-port = 7777 
+local-app-port = 8888           # needs to be adjusted because ssh needs to be factored in 
 #remote-url = "http://127.0.0.1:9999"
 remote-url = "https://replish.leon332157.repl.co"

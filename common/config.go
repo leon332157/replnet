@@ -2,16 +2,17 @@ package common
 
 import (
 	"fmt"
-	_  "github.com/sirupsen/logrus"
+	_ "github.com/sirupsen/logrus"
 	_ "net/url"
 )
 
 type ReplishConfig struct {
 	Mode           string `koanf:"mode"`            // Mode of operation
 	RemoteURL      string `koanf:"remote-url"`      // The repl.co url to connect to
-	LocalHttpPort  uint16 `koanf:"local-app-port"`  // The port of your http application
+	LocalHttpPort  uint16 `koanf:"local-app-port"`  // OPTINAL: The port of your http application
 	RemoteAppPort  uint16 `koanf:"remote-app-port"` // The port of a remote application
-	ListenPort     uint16 `koanf:"listen-port"`     // The port replish listen on for WS connection
+	LocalAppPort   uint16 `koanf:"local-app-port`   // OPTINAL: The port of client listener to proxy to remote app
+	ListenPort     uint16 `koanf:"listen-port"`     // OPTINAL: The port replish server listen on
 	ConfigFilePath string
 }
 
@@ -22,6 +23,7 @@ func checkPort(p int64) (uint16, error) {
 	}
 	return uint16(p), nil
 }
+
 /*
 // check config checks for required fields when in different modes
 func (c *ReplishConfig) checkConfig() error {
