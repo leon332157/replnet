@@ -32,22 +32,20 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
 		defer sock.Close()
 		_, data, err := ws.Read(context.Background())
-		log.Debugf("[WS Client] data: %s err: %v", data, err)
+		log.Debugf("[Websocket Client] data: %s err: %v", data, err)
 		if err != nil {
-			log.Error("[Ws Client] read from remote error: ", err)
+			log.Error("[Websocket Client] read from remote error: ", err)
 			ws.Close(websocket.StatusInternalError, err.Error())
 			return
 		}
-
 		written, err := sock.Write(data)
 		if err != nil {
-			log.Debugf("[WS Client] Write failed: %v", err)
+			log.Debugf("[Websocket Client] Write failed: %v", err)
 			return
 		} else {
 			log.Debugf("[Websocket Client] flushed %v to sock", written)
 		}
-		//if
-		//wsToSockChannel <- data
+
 	}
 }
 
@@ -60,7 +58,6 @@ func sockToWs(ws *websocket.Conn, sock net.Conn) {
 			log.Debugf("[Websocket Client] Read failed: %v", err)
 			return
 		}
-		//sockToWSChannel <- buf[:recvd]
 		err = ws.Write(context.Background(), websocket.MessageBinary, buf[:recvd])
 		if err != nil {
 			log.Debugf("[Websocket Client] Write failed: %v", err)
@@ -105,7 +102,7 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
 	log.Debugf("[Websocket Client] Connecting to %v", remoteUrl)
 	ctx := context.Background() //context.WithTimeout(context.Background(), timeout)
-	ws, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
+	_, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
 	if err != nil {
 		log.Fatalf("[Websocket Client] Dial failed: %s", err)
 	}
@@ -125,6 +122,10 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 			log.Debugf("[Websocket Client] Accepted from: %v", sock.RemoteAddr())
 		}
 		//go handleSocketConn(conn, c)
+		ws, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
+		if err != nil {
+			log.Fatalf("[Websocket Client] Dial failed: %s", err)
+		}
 		go wsToSock(ws, sock)
 		go sockToWs(ws, sock)
 

@@ -5,49 +5,54 @@ import (
 	//"time"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"net"
 	"net/http"
 	websocket "nhooyr.io/websocket"
 	"strconv"
-	"io"
-	//"strings"
 )
 
 func sockToWs(ws *websocket.Conn, sock net.Conn) {
-for {
-			buf := make([]byte, 256)
-			n, err := sock.Read(buf)
-			if err != nil {
-				if err == io.EOF{
-					ws.Close(websocket.StatusBadGateway,"EOF")
-					sock.Close()
-				}else{
+	for {
+		buf := make([]byte, 256)
+		n, err := sock.Read(buf)
+		if err != nil {
+			if err == io.EOF {
+				log.Debugf("[Websocket Handler] sock read EOF")
+				ws.Write(context.Background(), websocket.MessageBinary, buf[:n])
+				ws.Close(websocket.StatusBadGateway, "EOF")
+				sock.Close()
+			} else {
 				log.Errorf("[Websocket Handler] Read socket from %v err: %v\n", sock.RemoteAddr, err)
-				//sock.Close()
-				//ws.Close(websocket.StatusInternalError, err.Error())
-				//ws.Write(context.Background(), websocket.MessageBinary, []byte("baf"))
-				}
-				return
+				sock.Close()
+				ws.Close(websocket.StatusInternalError, err.Error())
 			}
-			ws.Write(context.Background(), websocket.MessageBinary, buf[:n])
+			return
 		}
+		ws.Write(context.Background(), websocket.MessageBinary, buf[:n])
+	}
 }
 
 func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
-			_, data, err := ws.Read(context.Background())
-			log.Debugf("[WS handler] data: %s err: %v", data, err)
-			if err != nil {
-				//c.Close(websocket.StatusInternalError, fmt.Sprintf("[Websocker Handler] Read err: %v", err))
-				return
-			}
-			sock.Write(data)
-			//time.Sleep(1000*time.Millisecond)
+		_, data, err := ws.Read(context.Background())
+		log.Debugf("[Websocket handler] data: %s err: %v", data, err)
+		if err != nil {
+			//c.Close(websocket.StatusInternalError, fmt.Sprintf("[Websocker Handler] Read err: %v", err))
+			return
 		}
+		n, err := sock.Write(data)
+		if err != nil {
+			ws.Close(websocket.StatusInternalError, err.Error())
+			sock.Close()
+			return
+		}
+		log.Debugf("[Websocket handler] flushed %d bytes to sock", n)
+	}
 }
 
 func handleWS(w http.ResponseWriter, r *http.Request) {
-	log.Debugln("[WS handler] recvd")
+	log.Debugln("[Websocket handler] recvd")
 	stringPort := r.URL.Query().Get("remoteAppPort")
 	if len(stringPort) == 0 {
 		return
@@ -71,9 +76,7 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 		ws.Close(websocket.StatusInternalError, err.Error())
 		return
 	}
-	//io.Copy(ws,conn)
-	//io.Copy(conn,ws)
 	go sockToWs(ws, conn)
-    go wsToSock(ws, conn)
+	go wsToSock(ws, conn)
 	//c.Close(websocket.StatusNormalClosure, "")
 }
