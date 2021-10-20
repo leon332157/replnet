@@ -23,7 +23,7 @@ func sockToWs(ws *websocket.Conn, sock net.Conn) {
 				ws.Close(websocket.StatusBadGateway, "EOF")
 				sock.Close()
 			} else {
-				log.Errorf("[Websocket Handler] Read socket from %v err: %v\n", sock.RemoteAddr, err)
+				log.Errorf("[Websocket Handler] read sock from %v err: %v\n", sock.RemoteAddr, err)
 				sock.Close()
 				ws.Close(websocket.StatusInternalError, err.Error())
 			}

@@ -34,13 +34,13 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 		_, data, err := ws.Read(context.Background())
 		log.Debugf("[Websocket Client] data: %s err: %v", data, err)
 		if err != nil {
-			log.Error("[Websocket Client] read from remote error: ", err)
+			log.Error("[Websocket Client] read from ws error: ", err)
 			ws.Close(websocket.StatusInternalError, err.Error())
 			return
 		}
 		written, err := sock.Write(data)
 		if err != nil {
-			log.Debugf("[Websocket Client] Write failed: %v", err)
+			log.Debugf("[Websocket Client] write sock error: %v", err)
 			return
 		} else {
 			log.Debugf("[Websocket Client] flushed %v to sock", written)
@@ -55,15 +55,15 @@ func sockToWs(ws *websocket.Conn, sock net.Conn) {
 		buf := make([]byte, 1024)
 		recvd, err := sock.Read(buf)
 		if err != nil {
-			log.Debugf("[Websocket Client] Read failed: %v", err)
+			log.Debugf("[Websocket Client] read sock error: %v", err)
 			return
 		}
 		err = ws.Write(context.Background(), websocket.MessageBinary, buf[:recvd])
 		if err != nil {
-			log.Debugf("[Websocket Client] Write failed: %v", err)
+			log.Debugf("[Websocket Client] write ws error: %v", err)
 			return
 		} else {
-			log.Debugf("[Websocket Client] flushed %v to channel", recvd)
+			log.Debugf("[Websocket Client] flushed %v to ws", recvd)
 		}
 	}
 }
@@ -130,7 +130,6 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 		go sockToWs(ws, sock)
 
 	}
-	//c.Write(ctx,websocket.MessageText,[]byte("Test"))
 	//defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
 	/*go func() {
