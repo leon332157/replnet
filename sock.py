@@ -20,13 +20,13 @@ print('Listening on port %s ...' % SERVER_PORT)
 while True:    
     # Wait for client connections
     client_connection, client_address = server_socket.accept()
-
+    print(f'accepted from :{client_address}')
     # Get the client request
     request = client_connection.recv(1024).decode()
-    print(request)
+    print(request.split('\n')[0])
 
     # Send HTTP response
-    response = 'HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nHello World\r\n'
+    response = f'HTTP/1.0 200 OK\r\nConnection: close\r\n\r\nHello {client_address} \n\n\nrequest: {request}\r\n'
     client_connection.sendall(response.encode())
     client_connection.close()
 
