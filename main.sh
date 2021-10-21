@@ -3,7 +3,7 @@ if [ $? -ne 0 ];then
     echo "Build failed!"
     exit 1
 fi
-python test_http_socket.py &
+python sock.py &
 ./bin/replish --server
 #GOPATH=/home/runner/go go get github.com/onsi/ginkgo/ginkgo
 #go clean -testcache
