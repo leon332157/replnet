@@ -12,9 +12,10 @@ import (
 	"strconv"
 )
 
+// flush socket data to websocket
 func sockToWs(ws *websocket.Conn, sock net.Conn) {
 	for {
-		buf := make([]byte, 256)
+		buf := make([]byte, 1024)
 		n, err := sock.Read(buf)
 		if err != nil {
 			if err == io.EOF {
@@ -33,6 +34,7 @@ func sockToWs(ws *websocket.Conn, sock net.Conn) {
 	}
 }
 
+// flush websocket data to socket
 func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	for {
 		_, data, err := ws.Read(context.Background())
@@ -51,6 +53,7 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	}
 }
 
+// Websocket handler
 func handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("[Websocket handler] recvd")
 	stringPort := r.URL.Query().Get("remoteAppPort")

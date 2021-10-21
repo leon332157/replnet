@@ -12,7 +12,6 @@ import (
 	"os"
 	_ "strconv"
 	"strings"
-	"time"
 
 	"github.com/akamensky/argparse"
 	koanfLib "github.com/knadh/koanf"
@@ -52,10 +51,8 @@ type DotReplit struct {
 }
 
 func init() {
-	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-	log.SetReportCaller(true)
-	log.SetLevel(log.DebugLevel)
-	log.Println(globalConfig)
+	log.SetFormatter(&log.TextFormatter{ForceColors: true,FullTimestamp: true})
+	log.SetReportCaller(false)
 }
 
 func startBasicHttp() {
@@ -68,9 +65,8 @@ func startBasicHttp() {
 func main() {
 	parser := argparse.NewParser("replish", "Command line tool for replit")
 	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	//logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
+	logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
 	serverFlag := parser.Flag("", "server", nil)
-	//server.UNUSED(logLevel)
 	/*mode := parser.Selector(
 		"m",
 		"mode",
@@ -90,6 +86,16 @@ func main() {
 		fmt.Print(parser.Usage(err))
 		log.Exit(1)
 	}
+	switch *logLevel {
+	case "DEBUG":
+		log.SetLevel(log.DebugLevel)
+	case "WARN":
+		log.SetLevel(log.WarnLevel)
+	case "ERROR":
+		log.SetLevel(log.ErrorLevel)
+	case "INFO":
+		log.SetLevel(log.InfoLevel)
+	}
 	globalConfig.ConfigFilePath = *configFilePath
 	var content []byte
 	if *serverFlag {
@@ -100,18 +106,12 @@ func main() {
 	if err := loadConfigKoanf(content); err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
-	// go startBasicHttp()
-	// time.Sleep(1 * time.Second) // wait for server to come online
-	// getPort()
-	log.Infof("running as %v", globalConfig.Mode)
+	log.Infof("[Main] running as %v", globalConfig.Mode)
 	switch strings.ToLower(globalConfig.Mode) {
 	case "client":
-		go client.StartMain(&globalConfig)
+		client.StartMain(&globalConfig)
 	case "server":
-		go server.StartMain(&globalConfig)
-	}
-	for {
-		time.Sleep(1 * time.Second)
+		server.StartMain(&globalConfig)
 	}
 }
 
@@ -206,7 +206,7 @@ func getPort() {
 
 // readConfigFile reads the config file and returns the config as a bytes
 func readConfigFile(filepath string) []byte {
-	log.Infof("reading config file %s", filepath)
+	log.Infof("[Main] reading config file %s", filepath)
 	ioutil.ReadFile(filepath)
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
