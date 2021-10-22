@@ -32,7 +32,7 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 	if !strings.Contains(r.URL.Path, ".git") {
 		username, password, ok := r.BasicAuth()
 		if !ok {
-			log.Debug("BasicAuth() failed")
+			log.Debug("[Webdav Handler] BasicAuth error")
 			w.Header().Set("WWW-Authenticate", `Basic realm="Enter username and password"`)
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
@@ -42,7 +42,7 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Not authorized", http.StatusUnauthorized)
 			return
 		} else {
-			log.Debug("[Webdav] auth passed")
+			log.Debug("[Webdav Handler] auth passed")
 		}
 	}
 	var ROOT_PATH string
@@ -60,12 +60,11 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 		LockSystem: webdav.NewMemLS(),
 		Logger: func(r *http.Request, err error) {
 			if err != nil {
-				log.Printf("[Webdav] %s %s: %s, ERROR: %s\n", r.UserAgent(), r.Method, r.URL, err)
+				log.Debugf("[Webdav Handler] %s %s: %s, ERROR: %s\n", r.UserAgent(), r.Method, r.URL, err)
 			} else {
-				log.Printf("[Webdav] %s %s: %s \n", r.UserAgent(), r.Method, r.URL)
+				log.Debugf("[Webdav Handler] %s %s: %s \n", r.UserAgent(), r.Method, r.URL)
 			}
 		},
 	}
-	//UNUSED(srv)
 	srv.ServeHTTP(w, r)
 }
