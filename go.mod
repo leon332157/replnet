@@ -12,6 +12,7 @@ require (
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/valyala/fasthttp v1.26.0
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	nhooyr.io/websocket v1.8.7
 )

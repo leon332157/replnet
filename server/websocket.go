@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	//"time"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"

@@ -51,7 +51,7 @@ type DotReplit struct {
 }
 
 func init() {
-	log.SetFormatter(&log.TextFormatter{ForceColors: true,FullTimestamp: true})
+	log.SetFormatter(&log.TextFormatter{ForceColors: true, FullTimestamp: true})
 	log.SetReportCaller(false)
 }
 
@@ -276,7 +276,7 @@ func loadConfigKoanf(content []byte) error {
 			if appPort > 65535 || appPort < 1 {
 				return fmt.Errorf("local http port is invalid (1-65535)")
 			}
-			globalConfig.LocalHttpPort = uint16(appPort)
+			globalConfig.AppHttpPort = uint16(appPort)
 		} else {
 			log.Warn("local http port is not set")
 		}

@@ -14,8 +14,8 @@ import (
 // TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
 func StartMain(config *common.ReplishConfig) {
 	// check server configs
-	if config.LocalHttpPort == 0 {
-		log.Warnln("[Server Config] local app port is 0, running without reverse proxy")
+	if config.AppHttpPort == 0 {
+		log.Warnln("[Server Config] app http port is 0, running without reverse proxy")
 	}
 	//http.FileServer(http.Dir("/home/runner/replish"))
 	listener, err := net.Listen("tcp4", fmt.Sprintf(":%v", config.ListenPort))
@@ -41,7 +41,7 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handleWS(w, r)
 	} else {
 		//TODO: check reverse proxy flag or check for port
-		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.LocalHttpPort))
+		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.AppHttpPort))
 		if err != nil {
 			log.Fatalf("[Server Router] Formatting url failed!")
 		}
