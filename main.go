@@ -224,6 +224,7 @@ func loadConfigKoanf(content []byte) error {
 	}
 
 	// checks if replish field exist
+	// check for websocket field 
 	if koanf.Exists("replish") {
 		err = koanf.Unmarshal("replish", &globalConfig)
 		if err != nil {
