@@ -18,7 +18,7 @@ function write_exmaple_config() {
     echo "[replish]" >> .replit;
     echo 'mode = "server"' >> .replit;
 }
-if ! grep -q "[replish]" ".replit";then
+if ! grep -qF "[replish]" ".replit";then
     write_exmaple_config
 else
     echo "replish field exist, skipping writing config"
