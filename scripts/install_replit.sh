@@ -1,6 +1,6 @@
 #! /bin/bash
 echo "Downloading replish binary to /home/runner/{$REPL_SLUG}"
-if [ -z ${REPL_SLUG} ];
+if [ -z $REPL_SLUG ];
 then
     cd /home/runner/$REPL_SLUG
 else
