@@ -52,12 +52,24 @@ func wsToSock(ws *websocket.Conn, sock net.Conn) {
 	}
 }
 
+func handleControl(ws *websocket.Conn) {
+	for {
+		msgtype, data, err := ws.Read(context.Background())
+		if err != nil {
+			log.Errorf("[Websocket handler] read err: %v", err)
+			return
+		}
+		log.Debugf("[Websocket handler]type: %s data: %s", msgtype, data)
+	}
+}
+
 // Websocket handler
 func handleWS(w http.ResponseWriter, r *http.Request) {
+	controlFlag := false
 	log.Debugln("[Websocket handler] recvd")
 	stringPort := r.URL.Query().Get("remoteAppPort")
 	if len(stringPort) == 0 {
-		return
+		controlFlag = true
 	}
 	intPort, err := strconv.ParseUint(stringPort, 10, 16)
 	if err != nil {
@@ -71,6 +83,11 @@ func handleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		log.Debugf("[Websocket Handler] Accepted from %v", r.RemoteAddr)
+	}
+	if controlFlag {
+		go handleControl(ws)
+		//ws.Close(websocket.StatusNormalClosure, "Control connection")
+		return
 	}
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", port))
 	if err != nil {
