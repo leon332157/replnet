@@ -62,9 +62,8 @@ func startBasicHttp() {
 }
 
 var Command struct {
-	Config     string `help:"Path to config file" type:"existingfile" default:".replit" aliases:"C" name:"config"`
-	LogLevel   string `enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
-	ServerFlag bool   `name:"server"`
+	Config   string `help:"Path to config file" type:"existingfile" default:".replit" aliases:"C" name:"config"`
+	LogLevel string `enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
 }
 
 func main() {
@@ -81,12 +80,7 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 	globalConfig.ConfigFilePath = Command.Config
-	var content []byte
-	if Command.ServerFlag {
-		content = []byte("[replish]\nmode = 'server'\nlocal-http-port=7777\nlisten-port = 9999")
-	} else {
-		content = readConfigFile(globalConfig.ConfigFilePath)
-	}
+	content := readConfigFile(globalConfig.ConfigFilePath)
 	if err := loadConfigKoanf(content); err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
