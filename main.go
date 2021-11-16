@@ -9,11 +9,10 @@ import (
 	_ "net"
 	"net/http"
 	"net/url"
-	"os"
 	_ "strconv"
 	"strings"
 
-	"github.com/akamensky/argparse"
+	"github.com/alecthomas/kong"
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
 	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
@@ -62,31 +61,16 @@ func startBasicHttp() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
 }
 
-func main() {
-	parser := argparse.NewParser("replish", "Command line tool for replit")
-	configFilePath := parser.String("C", "config", &argparse.Options{Help: ConfHelpString, Default: ".replit"})
-	logLevel := parser.Selector("", "log-level", []string{"INFO", "WARN", "ERROR", "DEBUG"}, &argparse.Options{Default: "INFO"})
-	serverFlag := parser.Flag("", "server", nil)
-	/*mode := parser.Selector(
-		"m",
-		"mode",
-		[]string{"c", "client", "s", "server"},
-		&argparse.Options{Help: ModeHelpString, Default: "client"},
-	)
-	replUrl := parser.String("c", "remote-url", &argparse.Options{Help: UrlHelpString, Default: nil})
-	listenPort := parser.Int("p", "listen-port", &argparse.Options{Help: "Port to listen on", Default: 8080})
-	server.UNUSED(mode, replUrl, listenPort)
-	*/
+var Command struct {
+	Config     string `help:"Path to config file" type:"existingfile" default:".replit" aliases:"C" name:"config"`
+	LogLevel   string `enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
+	ServerFlag bool   `name:"server"`
+}
 
-	// Parse input
-	if err := parser.Parse(os.Args); err != nil {
-		// In case of error print error and print usage
-		// This can also be done by passing -h or --help flags
-		// fmt.Println(err)
-		fmt.Print(parser.Usage(err))
-		log.Exit(1)
-	}
-	switch *logLevel {
+func main() {
+	_ = kong.Parse(&Command)
+
+	switch Command.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
 	case "WARN":
@@ -96,9 +80,9 @@ func main() {
 	case "INFO":
 		log.SetLevel(log.InfoLevel)
 	}
-	globalConfig.ConfigFilePath = *configFilePath
+	globalConfig.ConfigFilePath = Command.Config
 	var content []byte
-	if *serverFlag {
+	if Command.ServerFlag {
 		content = []byte("[replish]\nmode = 'server'\nlocal-http-port=7777\nlisten-port = 9999")
 	} else {
 		content = readConfigFile(globalConfig.ConfigFilePath)
@@ -215,7 +199,7 @@ func readConfigFile(filepath string) []byte {
 	return data
 }
 
-//TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe 
+//TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
 	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
@@ -224,7 +208,7 @@ func loadConfigKoanf(content []byte) error {
 	}
 
 	// checks if replish field exist
-	// check for websocket field 
+	// check for websocket field
 	if koanf.Exists("replish") {
 		err = koanf.Unmarshal("replish", &globalConfig)
 		if err != nil {
