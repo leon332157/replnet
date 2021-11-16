@@ -62,12 +62,12 @@ func startBasicHttp() {
 }
 
 var Command struct {
-	Config   string `help:"Path to config file" type:"existingfile" default:".replit" aliases:"C" name:"config"`
+	Config   string `help:"Path to config file" default:".replit" short:"C"`
 	LogLevel string `enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
 }
 
 func main() {
-	_ = kong.Parse(&Command)
+	_ = kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
 
 	switch Command.LogLevel {
 	case "DEBUG":
