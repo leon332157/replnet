@@ -1,6 +1,6 @@
 package common
 type ReplishConfig struct {
-	Mode           string `koanf:"mode"`            // Mode of operation
+	Mode           string `koanf:"mode"` //TODO: change to number for ram optimization // Mode of operation
 	RemoteURL      string `koanf:"remote-url"`      // Client: The repl.co url to connect to
 	AppHttpPort    uint16 `koanf:"app-http-port"`   // Server: OPTINAL: The port of your http application
 	RemoteAppPort  uint16 `koanf:"remote-app-port"` // Client: The port of the remote(tcp) application

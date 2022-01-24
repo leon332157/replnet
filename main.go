@@ -52,6 +52,7 @@ type DotReplit struct {
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true, FullTimestamp: true})
 	log.SetReportCaller(false)
+	log.SetLevel(log.DebugLevel)
 }
 
 func startBasicHttp() {
@@ -62,13 +63,22 @@ func startBasicHttp() {
 }
 
 var Command struct {
-	Config   string `help:"Path to config file" default:".replit" short:"C"`
-	LogLevel string `enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
+	Connect struct {
+		RemoteURL string `arg:"" help:"remote url to connect to"`
+		Port      uint16  `arg:"" help:"port to be forwarded" `
+	} `cmd:"" help:"Connect to a repl" short:"c" optional:"" aliases:"c"`
+
+	Serve struct {
+	} `cmd:"" help:"Serve on a repl" optional:""`
+	DefaultCommand struct{} `cmd:"" hidden:"" default:"1"`
+	Config         string   `help:"Path to config file" default:".replit" short:"C"`
+	LogLevel       string   `help:"Log Level (INFO,WARN,ERROR,DEBUG)" enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
+	Mode           string   `help:"Mode of operation, can be client or server" default:"client" short:"M" hidden:""`
 }
 
 func main() {
-	_ = kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
-
+	ctx := kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
+	log.Debugf("[Main] ctx.command: %s\n", ctx.Command())
 	switch Command.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
@@ -79,12 +89,19 @@ func main() {
 	case "INFO":
 		log.SetLevel(log.InfoLevel)
 	}
-	globalConfig.ConfigFilePath = Command.Config
-	content := readConfigFile(globalConfig.ConfigFilePath)
-	if err := loadConfigKoanf(content); err != nil {
-		log.Fatalf("Failed to load config file: %v", err)
+	switch ctx.Command() {
+	case "connect":
+		globalConfig.Mode = "client"
+	case "serve":
+		globalConfig.Mode = "server"
+	case "default-command":
+		globalConfig.ConfigFilePath = Command.Config
+		content := readConfigFile(globalConfig.ConfigFilePath)
+		if err := loadConfigKoanf(content); err != nil {
+			log.Fatalf("Failed to load config file: %v", err)
+		}
 	}
-	log.Infof("[Main] running as %v", globalConfig.Mode)
+	log.Debugf("[Main] running as %v", globalConfig.Mode)
 	switch strings.ToLower(globalConfig.Mode) {
 	case "client":
 		client.StartMain(&globalConfig)
@@ -184,7 +201,7 @@ func getPort() {
 
 // readConfigFile reads the config file and returns the config as a bytes
 func readConfigFile(filepath string) []byte {
-	log.Infof("[Main] reading config file %s", filepath)
+	log.Debugf("[Main] reading config file %s", filepath)
 	ioutil.ReadFile(filepath)
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
@@ -212,7 +229,6 @@ func loadConfigKoanf(content []byte) error {
 		return fmt.Errorf("replish field doesn't exist")
 	}
 	log.Debugln(koanf.Sprint())
-	log.Debugln(globalConfig)
 
 	switch strings.ToLower(globalConfig.Mode) {
 	case "client":
