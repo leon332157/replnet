@@ -3,13 +3,9 @@ package main
 // SNOW WAS HERE
 
 import (
-	_ "bufio"
 	"fmt"
 	"io/ioutil"
-	_ "net"
-	"net/http"
 	"net/url"
-	_ "strconv"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -19,7 +15,6 @@ import (
 
 	"github.com/leon332157/replish/client"
 	"github.com/leon332157/replish/common"
-	_ "github.com/leon332157/replish/netstat"
 	"github.com/leon332157/replish/server"
 
 	log "github.com/sirupsen/logrus"
@@ -55,20 +50,14 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func startBasicHttp() {
-	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(w, "Hello: %s", req.URL.Path)
-	})
-	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
-}
-
 var Command struct {
 	Connect struct {
 		RemoteURL string `arg:"" help:"remote url to connect to"`
-		Port      uint16  `arg:"" help:"port to be forwarded" `
+		Port      uint16 `arg:"" help:"port to be forwarded" `
 	} `cmd:"" help:"Connect to a repl" short:"c" optional:"" aliases:"c"`
 
 	Serve struct {
+		ListenPort uint16 `arg:"" help:"port to listen on" default:"0"`
 	} `cmd:"" help:"Serve on a repl" optional:""`
 	DefaultCommand struct{} `cmd:"" hidden:"" default:"1"`
 	Config         string   `help:"Path to config file" default:".replit" short:"C"`
@@ -92,8 +81,11 @@ func main() {
 	switch ctx.Command() {
 	case "connect":
 		globalConfig.Mode = "client"
+		globalConfig.RemoteURL = Command.Connect.RemoteURL
+		globalConfig.RemoteAppPort = Command.Connect.Port
 	case "serve":
 		globalConfig.Mode = "server"
+		globalConfig.ListenPort = Command.Serve.ListenPort
 	case "default-command":
 		globalConfig.ConfigFilePath = Command.Config
 		content := readConfigFile(globalConfig.ConfigFilePath)
