@@ -47,7 +47,7 @@ type DotReplit struct {
 func init() {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true, FullTimestamp: true})
 	log.SetReportCaller(false)
-	log.SetLevel(log.DebugLevel)
+
 }
 
 var Command struct {
@@ -58,6 +58,7 @@ var Command struct {
 
 	Serve struct {
 		ListenPort uint16 `arg:"" help:"port to listen on" default:"0"`
+		HttpPort   uint16 `arg:"" help:"port to listen on for http application" default:"0" optional:""`
 	} `cmd:"" help:"Serve on a repl" optional:""`
 	DefaultCommand struct{} `cmd:"" hidden:"" default:"1"`
 	Config         string   `help:"Path to config file" default:".replit" short:"C"`
@@ -67,7 +68,6 @@ var Command struct {
 
 func main() {
 	ctx := kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
-	log.Debugf("[Main] ctx.command: %s\n", ctx.Command())
 	switch Command.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
@@ -78,23 +78,26 @@ func main() {
 	case "INFO":
 		log.SetLevel(log.InfoLevel)
 	}
+	log.Debugf("[Main] ctx.command: %s\n", ctx.Command())
+
+	log.SetLevel(log.DebugLevel)
 	switch ctx.Command() {
-	case "connect":
-		globalConfig.Mode = "client"
+	case "connect": // assume we are connecting to a repl
+		globalConfig.Mode = "client" // client
 		globalConfig.RemoteURL = Command.Connect.RemoteURL
 		globalConfig.RemoteAppPort = Command.Connect.Port
-	case "serve":
-		globalConfig.Mode = "server"
+	case "serve": // assume we are serving a repl
+		globalConfig.Mode = "server" // server
 		globalConfig.ListenPort = Command.Serve.ListenPort
-	case "default-command":
-		globalConfig.ConfigFilePath = Command.Config
-		content := readConfigFile(globalConfig.ConfigFilePath)
+	case "default-command": // go to read config file
+		ConfigFilePath := Command.Config
+		content := readConfigFile(ConfigFilePath)
 		if err := loadConfigKoanf(content); err != nil {
 			log.Fatalf("Failed to load config file: %v", err)
 		}
 	}
 	log.Debugf("[Main] running as %v", globalConfig.Mode)
-	switch strings.ToLower(globalConfig.Mode) {
+	switch globalConfig.Mode {
 	case "client":
 		client.StartMain(&globalConfig)
 	case "server":
@@ -205,13 +208,13 @@ func readConfigFile(filepath string) []byte {
 //TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
+
 	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
 	if err != nil {
 		return err
 	}
 
 	// checks if replish field exist
-	// check for websocket field
 	if koanf.Exists("replish") {
 		err = koanf.Unmarshal("replish", &globalConfig)
 		if err != nil {
@@ -220,11 +223,12 @@ func loadConfigKoanf(content []byte) error {
 	} else {
 		return fmt.Errorf("replish field doesn't exist")
 	}
-	log.Debugln(koanf.Sprint())
 
-	switch strings.ToLower(globalConfig.Mode) {
+	log.Debugf("[loadConfigKoanf] unmarshal %v\n", globalConfig)
+
+	switch globalConfig.Mode {
 	case "client":
-		_, err := url.ParseRequestURI(globalConfig.RemoteURL)
+		_, err := url.ParseRequestURI(globalConfig.RemoteURL) // check if url is valid
 		if err != nil {
 			return fmt.Errorf("remote URL is invalid: %v", err)
 		}
@@ -279,6 +283,6 @@ func loadConfigKoanf(content []byte) error {
 		}
 		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)
 	}
-
+	log.Debugf("[loadConfigKoanf] Effective Config:\n%s", koanf.Sprint())
 	return nil
 }
