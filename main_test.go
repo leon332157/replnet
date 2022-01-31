@@ -73,6 +73,19 @@ var _ = Describe("dotreplit loader function (server)", func() {
 		Expect(globalConfig.ListenPort).To(Equal(uint16(0)))
 	})
 
+	It("default listen port to 0 when invalid", func() {
+		content := []byte(
+			`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"
+		[replish]
+		mode = "server"
+		listen-port = 99999`,
+		)
+		Expect(loadConfigKoanf(content)).To(Succeed())
+		Expect(globalConfig.ListenPort).To(Equal(uint16(0)))
+	})
+
 	It("should fail when local-http-port is not in valid range", func() {
 		content := []byte(
 			`language = "go"
@@ -85,4 +98,28 @@ var _ = Describe("dotreplit loader function (server)", func() {
 		Expect(loadConfigKoanf(content)).ToNot(Succeed())
 	})
 
+})
+
+var _ = Describe("dotreplit loader function (client/server)", func() {
+	It("should predict client",
+		func() {
+			content := []byte(`
+	 language = "go"
+	 run = "bash main.sh"
+	 onBoot="bash bootstrap.sh"
+	 [replish]
+	 mode="clent`)
+			Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		})
+	It("should predict server",
+		func() {
+			content := []byte(`
+	 language = "go"
+	 run = "bash main.sh"
+	 onBoot="bash bootstrap.sh"
+	 [replish]
+	 mode="srever`)
+			Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		})
+	// totally not useless testcases for coverage
 })

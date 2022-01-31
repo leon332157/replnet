@@ -1,8 +1,9 @@
 package main
-
+/*
 import (
 	"net/url"
 )
+
 
 func checkURL(str string) bool {
 	u, err := url.ParseRequestURI(str)
@@ -13,3 +14,4 @@ func checkURL(str string) bool {
 		return u.Scheme != "" && u.Host != ""
 	}
 }
+*/

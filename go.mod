@@ -10,8 +10,8 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/pelletier/go-toml v1.9.1 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.0-beta.6 // indirect
 	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942 // indirect
 	github.com/valyala/fasthttp v1.26.0
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
