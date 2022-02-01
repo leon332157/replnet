@@ -216,10 +216,10 @@ func loadConfigKoanf(content []byte) error {
 
 	// checks if replish field exist
 	if koanf.Exists("replish") {
-		err = koanf.Unmarshal("replish", &globalConfig)
-		if err != nil {
+		koanf.Unmarshal("replish", &globalConfig)
+		/*if err != nil {
 			return fmt.Errorf("unmarshalling config failed: %v", err)
-		}
+		}*/
 	} else {
 		return fmt.Errorf("replish field doesn't exist")
 	}
@@ -283,6 +283,7 @@ func loadConfigKoanf(content []byte) error {
 		}
 		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)
 	}
-	log.Debugf("[loadConfigKoanf] Effective Config:\n%s", koanf.Sprint())
+	log.Debugf("[loadConfigKoanf] Config:\n%s", koanf.Sprint())
+	log.Debugf("[loadConfigKoanf] Effective Config:\n%v", globalConfig)
 	return nil
 }

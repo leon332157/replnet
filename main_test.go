@@ -30,12 +30,35 @@ var _ = Describe("dotreplit loader", func() {
 		onBoot="bash bootstrap.sh"`,
 		)
 
-		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		Expect(loadConfigKoanf(content)).To(MatchError("replish field doesn't exist"))
 	})
+
+	It("should predict client",
+		func() {
+			content := []byte(`
+	 language = "go"
+	 run = "bash main.sh"
+	 onBoot="bash bootstrap.sh"
+	 [replish]
+	 mode="clent"`)
+			Expect(loadConfigKoanf(content)).To(MatchError("mode clent is invalid, did you mean client?"))
+		})
+
+	It("should predict server",
+		func() {
+			content := []byte(`
+	 language = "go"
+	 run = "bash main.sh"
+	 onBoot="bash bootstrap.sh"
+	 [replish]
+	 mode="srever"`)
+			Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		})
+	// totally not useless testcases for coverage
 })
 var _ = Describe("dotreplit loader function (client)", func() {
 
-	It("should fail when remote-app-port is not set", func() {
+	It("should fail when remote-url is not set", func() {
 		content := []byte(
 			`language = "go"
 		run = "bash main.sh"
@@ -43,7 +66,34 @@ var _ = Describe("dotreplit loader function (client)", func() {
 		[replish]
 		mode = "client"`,
 		)
-		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		UNUSED(content)
+	})
+	// TODO: branch into valid remote-url and invalid remote-url
+	It("should fail when remote-app-port is not set", func() {
+		content := []byte(
+			`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"
+		[replish]
+		mode = "client"
+		remote-url = "ws://localhost:8080"`,
+		)
+		Expect(loadConfigKoanf(content)).To(MatchError("remote application port is unset"))
+	})
+
+	It("should default local-app-port to remote-app-port when not set", func() {
+		content := []byte(
+			`language = "go"
+			run = "bash main.sh"
+			onBoot="bash bootstrap.sh"
+			[replish]
+			mode = "client"
+			remote-app-port = 8080
+			remote-url = "ws://localhost:8080"`,
+		)
+		Expect(loadConfigKoanf(content)).To(Succeed())
+		Expect(globalConfig.RemoteAppPort).To(Equal(8080))
+		Expect(globalConfig.LocalAppPort).To(Equal(8080))
 	})
 
 	It("should fail when remote-app-port is not in valid range", func() {
@@ -55,9 +105,37 @@ var _ = Describe("dotreplit loader function (client)", func() {
 			mode = "client"
 			remote-app-port = 65599`,
 		)
-		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+		Expect(loadConfigKoanf(content)).To(MatchError("remote app port 65599 is invalid (1-65535)"))
 	})
 
+	It("should set local-app-port",func() {
+		content := []byte(
+			`language = "go"
+			run = "bash main.sh"
+			onBoot="bash bootstrap.sh"
+			[replish]
+			mode = "client"
+			remote-app-port = 8080
+			local-app-port = 8081
+			remote-url = "ws://localhost:8080"`,
+		)
+		Expect(loadConfigKoanf(content)).To(Succeed())
+		Expect(globalConfig.LocalAppPort).To(Equal(uint16(8081)))
+	})
+
+	It("should fail when local-app-port is not in valid range", func() {
+
+		content := []byte(
+			`language = "go"
+			run = "bash main.sh"
+			onBoot="bash bootstrap.sh"
+			[replish]
+			mode = "client"
+			remote-app-port = 8080
+			local-app-port = 69999`,
+		)
+		Expect(loadConfigKoanf(content)).ToNot(Succeed())
+	})
 })
 
 var _ = Describe("dotreplit loader function (server)", func() {
@@ -98,28 +176,4 @@ var _ = Describe("dotreplit loader function (server)", func() {
 		Expect(loadConfigKoanf(content)).ToNot(Succeed())
 	})
 
-})
-
-var _ = Describe("dotreplit loader function (client/server)", func() {
-	It("should predict client",
-		func() {
-			content := []byte(`
-	 language = "go"
-	 run = "bash main.sh"
-	 onBoot="bash bootstrap.sh"
-	 [replish]
-	 mode="clent`)
-			Expect(loadConfigKoanf(content)).ToNot(Succeed())
-		})
-	It("should predict server",
-		func() {
-			content := []byte(`
-	 language = "go"
-	 run = "bash main.sh"
-	 onBoot="bash bootstrap.sh"
-	 [replish]
-	 mode="srever`)
-			Expect(loadConfigKoanf(content)).ToNot(Succeed())
-		})
-	// totally not useless testcases for coverage
 })
