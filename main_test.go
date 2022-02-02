@@ -36,27 +36,43 @@ onBoot="bash bootstrap.sh"`)
 		})
 	})
 
-	It("should predict client",
-		func() {
-			content := []byte(`
-	 language = "go"
-	 run = "bash main.sh"
-	 onBoot="bash bootstrap.sh"
-	 [replish]
-	 mode="clent"`)
-			Expect(loadConfigKoanf(content)).To(MatchError("mode clent is invalid, did you mean client?"))
-		})
+	/*
+		It("should predict client",
+			func() {
+				content := []byte(`
+		 language = "go"
+		 run = "bash main.sh"
+		 onBoot="bash bootstrap.sh"
+		 [replish]
+		 mode="clent"`)
+				Expect(loadConfigKoanf(content)).To(MatchError("mode clent is invalid, did you mean client?"))
+			})
 
-	It("should predict server",
-		func() {
+
+		It("should predict server",
+			func() {
+				content := []byte(`
+		 language = "go"
+		 run = "bash main.sh"
+		 onBoot="bash bootstrap.sh"
+		 [replish]
+		 mode="srever"`)
+				Expect(loadConfigKoanf(content)).To(MatchError("mode srever is invalid, did you mean server?"))
+			})
+	*/
+
+	When("mode is invalid", func() {
+		It("should fail", func() {
 			content := []byte(`
 	 language = "go"
 	 run = "bash main.sh"
 	 onBoot="bash bootstrap.sh"
 	 [replish]
-	 mode="srever"`)
-			Expect(loadConfigKoanf(content)).To(MatchError("mode srever is invalid, did you mean server?"))
+	 mode="test"`)
+			Expect(loadConfigKoanf(content)).To(MatchError("mode test is invalid"))
+
 		})
+	})
 
 	Describe("dotreplit loader (client)", func() {
 		When("remote url is not set", func() {

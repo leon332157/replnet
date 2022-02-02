@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"strings"
 
 	"github.com/alecthomas/kong"
 	koanfLib "github.com/knadh/koanf"
@@ -272,15 +271,16 @@ func loadConfigKoanf(content []byte) error {
 			log.Warn("local http port is not set")
 		}
 	default:
-		var prediction string
+		return fmt.Errorf("mode %v is invalid", globalConfig.Mode)
+		/*var prediction string
 		if strings.ContainsAny(globalConfig.Mode, "svr") {
 			prediction = "server"
 		} else if strings.ContainsAny(globalConfig.Mode, "cli") {
 			prediction = "client"
 		} else {
-			return fmt.Errorf("mode %v is invalid", globalConfig.Mode)
+
 		}
-		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)
+		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)*/
 	}
 	log.Debugf("[loadConfigKoanf] Config:\n%s", koanf.Sprint())
 	log.Debugf("[loadConfigKoanf] Effective Config:\n%v", globalConfig)
