@@ -208,7 +208,6 @@ func readConfigFile(filepath string) []byte {
 //TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
-
 	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
 	if err != nil {
 		return err
@@ -266,7 +265,7 @@ func loadConfigKoanf(content []byte) error {
 		if koanf.Exists("replish.local-http-port") {
 			appPort := koanf.Int64("replish.local-http-port") // read int64 because fool proof
 			if appPort > 65535 || appPort < 1 {
-				return fmt.Errorf("local http port is invalid (1-65535)")
+				return fmt.Errorf("local http port %v is invalid (1-65535)", appPort)
 			}
 			globalConfig.AppHttpPort = uint16(appPort)
 		} else {

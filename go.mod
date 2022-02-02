@@ -7,8 +7,8 @@ require (
 	github.com/joho/godotenv v1.3.0
 	github.com/klauspost/compress v1.13.0 // indirect
 	github.com/knadh/koanf v1.2.0
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.13.0
+	github.com/onsi/ginkgo/v2 v2.1.1
+	github.com/onsi/gomega v1.17.0
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1-0.20210427113832-6241f9ab9942 // indirect
