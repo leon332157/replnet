@@ -210,5 +210,19 @@ onBoot="bash bootstrap.sh"`)
 			})
 		})
 
+		It("should set local-http-port", func() {
+			content := []byte(
+				`language = "go"
+		run = "bash main.sh"
+		onBoot="bash bootstrap.sh"
+		[replish]
+		mode = "server"
+		local-http-port = 7777`,
+			)
+			Expect(loadConfigKoanf(content)).To(Succeed())
+			Expect(globalConfig.AppHttpPort).To(Equal(uint16(7777)))
+
+		})
+
 	})
 })
