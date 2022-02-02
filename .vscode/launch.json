@@ -5,11 +5,17 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch file",
+      "name": "Launch test function",
       "type": "go",
       "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/main.go"
+      "mode": "test",
+      "program": "${workspaceFolder}",
+      "args": [
+        "-test.run",
+        "TestReplish",
+        "-coverprofile=coverage.txt",
+        "-covermode=atomic"
+      ]
     }
   ]
 }
