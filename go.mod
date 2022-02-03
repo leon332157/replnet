@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/alecthomas/kong v0.2.18
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/klauspost/compress v1.13.0 // indirect
 	github.com/knadh/koanf v1.2.0

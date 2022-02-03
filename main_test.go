@@ -18,7 +18,20 @@ func TestReplish(t *testing.T) {
 	RunSpecs(t, "Main")
 }
 
+var _ = Describe("reading file", func() {
+	It("should read the file given", func() {
+		Expect(readConfigFile(".replit")).To(Succeed())
+
+	})
+	When("file doesn't exist", func() {
+		It("should return an error", func() {
+			Expect(readConfigFile("doesntexist")).ToNot(Succeed())
+		})
+	})
+})
+
 var _ = Describe("dotreplit loader", func() {
+
 	When("toml is invalid", func() {
 		It("should fail", func() {
 			content := []byte(`broken`)

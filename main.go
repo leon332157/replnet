@@ -60,7 +60,7 @@ var Command struct {
 		HttpPort   uint16 `arg:"" help:"port to listen on for http application" default:"0" optional:""`
 	} `cmd:"" help:"Serve on a repl" optional:""`
 	DefaultCommand struct{} `cmd:"" hidden:"" default:"1"`
-	Config         string   `help:"Path to config file" default:".replit" short:"C"`
+	ConfigFile     string   `help:"Path to config file" default:".replit" short:"C"`
 	LogLevel       string   `help:"Log Level (INFO,WARN,ERROR,DEBUG)" enum:"INFO, WARN, ERROR, DEBUG" default:"INFO" type:"enum"`
 	Mode           string   `help:"Mode of operation, can be client or server" default:"client" short:"M" hidden:""`
 }
@@ -89,9 +89,13 @@ func main() {
 		globalConfig.Mode = "server" // server
 		globalConfig.ListenPort = Command.Serve.ListenPort
 	case "default-command": // go to read config file
-		ConfigFilePath := Command.Config
-		content := readConfigFile(ConfigFilePath)
-		if err := loadConfigKoanf(content); err != nil {
+		ConfigFilePath := Command.ConfigFile
+		log.Debugf("[Main] reading config file %s", ConfigFilePath)
+		data, err := ioutil.ReadFile(ConfigFilePath)
+		if err != nil {
+			log.Fatalf("Failed to read config file: %v\n", err)
+		}
+		if err := loadConfigKoanf(data); err != nil {
 			log.Fatalf("Failed to load config file: %v", err)
 		}
 	}
@@ -196,7 +200,6 @@ func getPort() {
 // readConfigFile reads the config file and returns the config as a bytes
 func readConfigFile(filepath string) []byte {
 	log.Debugf("[Main] reading config file %s", filepath)
-	ioutil.ReadFile(filepath)
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatalf("Error reading config file: %v\n", err)
