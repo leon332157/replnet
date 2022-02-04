@@ -197,16 +197,6 @@ func getPort() {
 }
 */
 
-// readConfigFile reads the config file and returns the config as a bytes
-func readConfigFile(filepath string) []byte {
-	log.Debugf("[Main] reading config file %s", filepath)
-	data, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		log.Fatalf("Error reading config file: %v\n", err)
-	}
-	return data
-}
-
 //TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
