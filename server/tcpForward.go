@@ -1,5 +1,6 @@
 package server
 // Deprecated in favor of reverse proxy
+/*
 import (
 	"bufio"
 	"bytes"
@@ -109,3 +110,4 @@ func flushToLocal(remoteConn net.Conn, localConn net.Conn) {
 		buf = nil
 	}
 }
+*/
