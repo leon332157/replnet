@@ -10,7 +10,7 @@ import (
 
 func UNUSED(x ...interface{}) {
 }
-func TestReplish(t *testing.T) {
+func TestReplnet(t *testing.T) {
 	log.SetFormatter(&log.TextFormatter{ForceColors: true})
 	log.SetReportCaller(true)
 	log.SetLevel(log.ErrorLevel)

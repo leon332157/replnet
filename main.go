@@ -12,9 +12,9 @@ import (
 	koanfToml "github.com/knadh/koanf/parsers/toml"
 	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
 
-	"github.com/leon332157/replish/client"
-	"github.com/leon332157/replish/common"
-	"github.com/leon332157/replish/server"
+	"github.com/ReplDepot/replnet/client"
+	"github.com/ReplDepot/replnet/common"
+	"github.com/ReplDepot/replnet/server"
 
 	log "github.com/sirupsen/logrus"
 )

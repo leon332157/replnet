@@ -3,7 +3,7 @@ package client
 import (
 	"time"
 
-	"github.com/leon332157/replish/common"
+	"github.com/ReplDepot/replnet/common"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -2,13 +2,14 @@ package server
 
 import (
 	"fmt"
-	"github.com/leon332157/replish/common"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"github.com/ReplDepot/replnet/common"
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
@@ -39,6 +40,8 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if strings.HasPrefix(path, "/__ws") {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
 		handleWS(w, r)
+	} else if strings.HasPrefix(path, "/__ping") {
+		w.Write([]byte("pong"))
 	} else {
 		//TODO: check reverse proxy flag or check for port
 		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.AppHttpPort))
