@@ -138,6 +138,17 @@ onBoot="bash bootstrap.sh"`)
 			})
 		})
 
+		When("remote-url is not parseable", func() {
+			It("should fail", func() {
+				content := []byte(
+					`[replnet]
+		mode = "client"
+		[replnet.client]
+		remote-url = "test"`)
+				Expect(loadConfigKoanf(content)).To(MatchError("remote-url is invalid: parse \"test\": invalid URI for request"))
+			})
+		})
+
 		When("remote-url is not the correct schema", func() {
 			It("should fail", func() {
 				content := []byte(
@@ -149,7 +160,7 @@ onBoot="bash bootstrap.sh"`)
 			})
 		})
 
-		When("remote url host is empty", func() {
+		When("remote-url host is empty", func() {
 			It("should fail", func() {
 				content := []byte(
 					`[replnet]
