@@ -4,8 +4,8 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"net/url"
+	"os"
 
 	"github.com/alecthomas/kong"
 	koanfLib "github.com/knadh/koanf"
@@ -268,9 +268,6 @@ func loadConfigKoanf(content []byte) error {
 
 	case "server":
 		globalConfig.Mode = "server"
-		/*if !koanf.Exists("replnet.server") {
-			return fmt.Errorf("replnet.server field doesn't exist")
-		}*/
 
 		if koanf.Exists("replnet.server.listen-port") {
 			listenPort := koanf.Int64("replnet.server.listen-port")
@@ -298,15 +295,6 @@ func loadConfigKoanf(content []byte) error {
 
 	default:
 		return fmt.Errorf("mode %v is invalid", mode)
-		/*var prediction string
-		if strings.ContainsAny(globalConfig.Mode, "svr") {
-			prediction = "server"
-		} else if strings.ContainsAny(globalConfig.Mode, "cli") {
-			prediction = "client"
-		} else {
-
-		}
-		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)*/
 	}
 	log.Debugf("[loadConfigKoanf] .replit:\n%s", koanf.Sprint())
 	log.Debugf("[loadConfigKoanf] Loaded Global Config: %+v\n", globalConfig)

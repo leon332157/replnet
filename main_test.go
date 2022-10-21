@@ -49,31 +49,6 @@ onBoot="bash bootstrap.sh"`)
 		})
 	})
 
-	/*
-		It("should predict client",
-			func() {
-				content := []byte(`
-		 language = "go"
-		 run = "bash main.sh"
-		 onBoot="bash bootstrap.sh"
-		 [replnet]
-		 mode="clent"`)
-				Expect(loadConfigKoanf(content)).To(MatchError("mode clent is invalid, did you mean client?"))
-			})
-
-
-		It("should predict server",
-			func() {
-				content := []byte(`
-		 language = "go"
-		 run = "bash main.sh"
-		 onBoot="bash bootstrap.sh"
-		 [replnet]
-		 mode="srever"`)
-				Expect(loadConfigKoanf(content)).To(MatchError("mode srever is invalid, did you mean server?"))
-			})
-	*/
-
 	When("mode is not set", func() {
 		It("should return error", func() {
 			content := []byte(`
