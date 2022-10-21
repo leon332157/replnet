@@ -17,4 +17,3 @@ func TestReplnetServer(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Server")
 }
-var _ = Describe("replnet server")

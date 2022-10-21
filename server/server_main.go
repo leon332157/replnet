@@ -8,18 +8,18 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ReplDepot/replnet/common"
+	"github.com/leon332157/replnet/common"
 	log "github.com/sirupsen/logrus"
 )
 
 // TODO: Handler for __dav, *.git, __ws, __ssh and wildcard (reverse proxy)
-func StartMain(config *common.ReplishConfig) {
+func StartMain(config *common.ReplnetConfig) {
 	// check server configs
-	if config.AppHttpPort == 0 {
+	if config.Server.ReverseProxyPort == 0 {
 		log.Warnln("[Server Config] app http port is 0, running without reverse proxy")
 	}
 	//http.FileServer(http.Dir("/home/runner/replish"))
-	listener, err := net.Listen("tcp4", fmt.Sprintf(":%v", config.ListenPort))
+	listener, err := net.Listen("tcp4", fmt.Sprintf(":%v", config.Server.ListenPort))
 	if err != nil {
 		log.Panicf("[Server Main] %s\n", err)
 	}
@@ -29,7 +29,7 @@ func StartMain(config *common.ReplishConfig) {
 }
 
 type ReplishRouter struct {
-	config *common.ReplishConfig
+	config *common.ReplnetConfig
 }
 
 func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	} else {
 		//TODO: check reverse proxy flag or check for port
-		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.AppHttpPort))
+		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.Server.ReverseProxyPort))
 		if err != nil {
 			log.Fatalf("[Server Router] Formatting url failed!")
 		}

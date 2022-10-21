@@ -4,23 +4,23 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"net/url"
 
 	"github.com/alecthomas/kong"
 	koanfLib "github.com/knadh/koanf"
 	koanfToml "github.com/knadh/koanf/parsers/toml"
-	koanfBytes "github.com/knadh/koanf/providers/rawbytes"
+	koanfRawBytes "github.com/knadh/koanf/providers/rawbytes"
 
-	"github.com/ReplDepot/replnet/client"
-	"github.com/ReplDepot/replnet/common"
-	"github.com/ReplDepot/replnet/server"
+	"github.com/leon332157/replnet/client"
+	"github.com/leon332157/replnet/common"
+	"github.com/leon332157/replnet/server"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	globalConfig common.ReplishConfig
+	globalConfig common.ReplnetConfig
 	koanfConfig  = koanfLib.Conf{
 		Delim:       ".",
 		StrictMerge: true,
@@ -36,11 +36,12 @@ const (
 )
 
 type DotReplit struct {
-	Run      string
-	Language string
-	OnBoot   string
-	Packager map[string]interface{}
-	Replish  common.ReplishConfig `koanf:"replish"`
+	Run        string
+	Entrypoint string
+	OnBoot     string
+	Compile    string
+	//Packager map[string]interface{}
+	Replnet common.ReplnetConfig `koanf:"replnet"`
 }
 
 func init() {
@@ -66,7 +67,7 @@ var Command struct {
 }
 
 func main() {
-	ctx := kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
+	cmdCtx := kong.Parse(&Command, kong.Name("replish"), kong.Description("A websocket proxy for replit"))
 	switch Command.LogLevel {
 	case "DEBUG":
 		log.SetLevel(log.DebugLevel)
@@ -77,25 +78,25 @@ func main() {
 	case "INFO":
 		log.SetLevel(log.InfoLevel)
 	}
-	log.Debugf("[Main] ctx.command: %s\n", ctx.Command())
+	log.Debugf("[Main] ctx.command: %s\n", cmdCtx.Command())
 
 	log.SetLevel(log.DebugLevel)
-	switch ctx.Command() {
-	case "connect": // assume we are connecting to a repl
+	switch cmdCtx.Command() { // read the command given
+	case "connect": // the command given is to connect
 		globalConfig.Mode = "client" // client
-		globalConfig.RemoteURL = Command.Connect.RemoteURL
-		globalConfig.RemoteAppPort = Command.Connect.Port
-	case "serve": // assume we are serving a repl
-		globalConfig.Mode = "server" // server
-		globalConfig.ListenPort = Command.Serve.ListenPort
-	case "default-command": // go to read config file
+		globalConfig.Client.RemoteURL = Command.Connect.RemoteURL
+		globalConfig.Client.RemotePort = Command.Connect.Port
+	case "serve": // the command given is server
+		globalConfig.Mode = "server" // set mode to server
+		globalConfig.Server.ListenPort = Command.Serve.ListenPort
+	case "default-command": // if none go to read config file
 		ConfigFilePath := Command.ConfigFile
 		log.Debugf("[Main] reading config file %s", ConfigFilePath)
-		data, err := ioutil.ReadFile(ConfigFilePath)
+		data, err := os.ReadFile(ConfigFilePath) // read the config file
 		if err != nil {
 			log.Fatalf("Failed to read config file: %v\n", err)
 		}
-		if err := loadConfigKoanf(data); err != nil {
+		if err := loadConfigKoanf(data); err != nil { // load the config file
 			log.Fatalf("Failed to load config file: %v", err)
 		}
 	}
@@ -197,74 +198,106 @@ func getPort() {
 }
 */
 
-//TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
+// TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
-	err := koanf.Load(koanfBytes.Provider(content), koanfToml.Parser())
+	err := koanf.Load(koanfRawBytes.Provider(content), koanfToml.Parser())
 	if err != nil {
 		return err
 	}
 
 	// checks if replish field exist
-	if koanf.Exists("replish") {
-		koanf.Unmarshal("replish", &globalConfig)
-		/*if err != nil {
-			return fmt.Errorf("unmarshalling config failed: %v", err)
-		}*/
-	} else {
-		return fmt.Errorf("replish field doesn't exist")
+	if !koanf.Exists("replnet") {
+		return fmt.Errorf("replnet field doesn't exist")
 	}
 
-	log.Debugf("[loadConfigKoanf] unmarshal %v\n", globalConfig)
+	// checks if mode key exist``
+	if !koanf.Exists("replnet.mode") {
+		return fmt.Errorf("mode is required")
+	}
 
-	switch globalConfig.Mode {
+	mode := koanf.MustString("replnet.mode")
+	switch mode {
 	case "client":
-		_, err := url.ParseRequestURI(globalConfig.RemoteURL) // check if url is valid
-		if err != nil {
-			return fmt.Errorf("remote URL is invalid: %v", err)
+		globalConfig.Mode = "client"
+		if !koanf.Exists("replnet.client") {
+			return fmt.Errorf("replnet.client field doesn't exist")
 		}
-		if koanf.Exists("replish.remote-app-port") {
-			remoteAppPort := koanf.Int64("replish.remote-app-port")
-			if remoteAppPort > 65535 || remoteAppPort < 1 {
-				return fmt.Errorf("remote app port %v is invalid (1-65535)", remoteAppPort)
+
+		if koanf.Exists("replnet.client.remote-url") {
+			remoteURL := koanf.MustString("replnet.client.remote-url")
+			parsedUrl, err := url.ParseRequestURI(remoteURL) // check if url is valid
+			if err != nil {
+				return fmt.Errorf("remote-url is invalid: %v", err)
 			}
-			globalConfig.RemoteAppPort = uint16(remoteAppPort)
-		} else {
-			return fmt.Errorf("remote application port is unset")
-		}
-		if koanf.Exists("replish.local-app-port") {
-			localAppPort := koanf.Int64("replish.local-app-port")
-			if localAppPort > 65535 || localAppPort < 1 {
-				return fmt.Errorf("local app port %v is invalid (1-65535)", localAppPort)
+
+			log.Debugf("%+v\n", parsedUrl)
+			if (parsedUrl.Scheme != "http" && parsedUrl.Scheme != "https") &&
+				(parsedUrl.Scheme != "ws" && parsedUrl.Scheme != "wss") {
+				return fmt.Errorf("remote-url must be http, https, ws or wss")
 			}
-			globalConfig.LocalAppPort = uint16(localAppPort)
+			if parsedUrl.Host == "" {
+				return fmt.Errorf("remote-url is invalid: host is empty")
+			}
+			globalConfig.Client.RemoteURL = remoteURL
 		} else {
-			globalConfig.LocalAppPort = globalConfig.RemoteAppPort
+			return fmt.Errorf("remote-url is required")
 		}
+
+		if koanf.Exists("replnet.client.remote-port") {
+			remotePort := koanf.Int64("replnet.client.remote-port") // must use int64 to avoid overflow
+			if remotePort > 65535 || remotePort < 1 {
+				return fmt.Errorf("remote-port %v is invalid (1-65535)", remotePort)
+			}
+			globalConfig.Client.RemotePort = uint16(remotePort)
+		} else {
+			return fmt.Errorf("remote-port is required")
+		}
+
+		if koanf.Exists("replnet.client.local-port") {
+			localPort := koanf.Int64("replnet.client.local-port")
+
+			if localPort > 65535 || localPort < 1 {
+				return fmt.Errorf("local-port %v is invalid (1-65535)", localPort)
+			}
+			globalConfig.Client.LocalPort = uint16(localPort)
+		} else {
+			globalConfig.Client.LocalPort = globalConfig.Client.RemotePort // default to remote app port if not set
+			log.Warnf("local-port is not set, defaulting to remote-port: %v", globalConfig.Client.RemotePort)
+		}
+
 	case "server":
-		if koanf.Exists("replish.listen-port") {
-			listenPort := koanf.Int64("replish.listen-port")
+		globalConfig.Mode = "server"
+		/*if !koanf.Exists("replnet.server") {
+			return fmt.Errorf("replnet.server field doesn't exist")
+		}*/
+
+		if koanf.Exists("replnet.server.listen-port") {
+			listenPort := koanf.Int64("replnet.server.listen-port")
 			// Check if listen port is in valid range
 			if listenPort > 65535 || listenPort < 0 {
 				log.Warnln("listen port is invalid (0-65535), defaulting to 0")
-				globalConfig.ListenPort = 0
+				listenPort = 0
 			}
+			globalConfig.Server.ListenPort = uint16(listenPort)
 		} else {
-			// Default to 0 if listen port doesn't exist
 			log.Warnln("listen port is unset, defaulting to 0")
+			globalConfig.Server.ListenPort = 0
 		}
 
-		if koanf.Exists("replish.local-http-port") {
-			appPort := koanf.Int64("replish.local-http-port") // read int64 because fool proof
-			if appPort > 65535 || appPort < 1 {
-				return fmt.Errorf("local http port %v is invalid (1-65535)", appPort)
+		if koanf.Exists("replnet.server.reverse-proxy-port") {
+			reverseProxyPort := koanf.Int64("replnet.server.reverse-proxy-port")
+			if reverseProxyPort > 65535 || reverseProxyPort < 0 {
+				return fmt.Errorf("reverse-proxy-port %v is invalid (0-65535)", reverseProxyPort)
 			}
-			globalConfig.AppHttpPort = uint16(appPort)
+			globalConfig.Server.ReverseProxyPort = uint16(reverseProxyPort)
 		} else {
-			log.Warn("local http port is not set")
+			log.Warn("reverse proxy port is not set, no reverse proxy will be used")
+			globalConfig.Server.ReverseProxyPort = 0
 		}
+
 	default:
-		return fmt.Errorf("mode %v is invalid", globalConfig.Mode)
+		return fmt.Errorf("mode %v is invalid", mode)
 		/*var prediction string
 		if strings.ContainsAny(globalConfig.Mode, "svr") {
 			prediction = "server"
@@ -275,7 +308,7 @@ func loadConfigKoanf(content []byte) error {
 		}
 		return fmt.Errorf("mode %v is invalid, did you mean %v?", globalConfig.Mode, prediction)*/
 	}
-	log.Debugf("[loadConfigKoanf] Config:\n%s", koanf.Sprint())
-	log.Debugf("[loadConfigKoanf] Effective Config:\n%v", globalConfig)
+	log.Debugf("[loadConfigKoanf] .replit:\n%s", koanf.Sprint())
+	log.Debugf("[loadConfigKoanf] Loaded Global Config: %+v\n", globalConfig)
 	return nil
 }
