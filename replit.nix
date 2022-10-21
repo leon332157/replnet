@@ -1,6 +1,8 @@
 { pkgs }: {
 	deps = [
-    pkgs.go
-	pkgs.python39Full
+    pkgs.netcat-gnu
+    pkgs.go_1_18
+	pkgs.python310
+    pkgs.python310Packages.autopep8
 	];
 }

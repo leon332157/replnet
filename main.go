@@ -198,7 +198,6 @@ func getPort() {
 }
 */
 
-// TODO: Maybe add both client and server field, then detect if running on replit to change mode or manually set modoe
 // loadConfigKoanf loads the config file into koanf and checks for required configs
 func loadConfigKoanf(content []byte) error {
 	err := koanf.Load(koanfRawBytes.Provider(content), koanfToml.Parser())
