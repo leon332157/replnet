@@ -1,13 +1,16 @@
 language = "nix"
 run = "bash main.sh"
 onBoot = "bash bootstrap.sh"
-[replish]
+[replnet]
 mode = "client"
-remote-app-port = 7777
-app-http-port = 7777 
-local-app-port = 8888           # needs to be adjusted because ssh needs to be factored in 
+[replnet.client]
+remote-port = 20000
+#app-http-port = 7777 
+#local-app-port = 8888           # needs to be adjusted because ssh needs to be factored in 
 #remote-url = "http://127.0.0.1:9999"
-remote-url = "ws://replish.leon332157.repl.co"
+remote-url = "ws://replnet.leon332157.repl.co"
+[replnet.server]
+reverse-proxt-port = 0
 
 [nix]
 channel = "stable-22_05"
