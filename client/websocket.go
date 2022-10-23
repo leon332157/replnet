@@ -77,7 +77,7 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 	remoteUrl = strings.TrimRight(remoteUrl, "/")
 	log.Infof("[Websocket Client] Connecting to %v", remoteUrl)
 	ctx := context.Background() //context.WithTimeout(context.Background(), timeout)
-	control, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws", remoteUrl), &websocket.DialOptions{HTTPClient: &httpClient})
+	/*control, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws", remoteUrl), &websocket.DialOptions{HTTPClient: &httpClient})
 	//TODO: add timeout
 	//TODO: control channel
 	if err != nil {
@@ -93,6 +93,7 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 			//time.Sleep(time.Second * 1)
 		}
 	}()
+	*/
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", localPort))
 	if err != nil {
 		log.Debugf("[Websocket Client] Listen failed: %v", err)
@@ -106,7 +107,10 @@ func startWS(remoteUrl string, remotePort uint16, localPort uint16, timeout time
 		} else {
 			log.Debugf("[Websocket Client] Accepted from: %v", sock.RemoteAddr())
 		}
-		ws, _, err := websocket.Dial(ctx, fmt.Sprintf("%s/__ws?remoteAppPort=%v", remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
+		url:=fmt.Sprintf("%s/__ws?port=%v", remoteUrl, remotePort)
+		log.Debugf("[Websocket Client] ws.Dial to %v", url)
+
+		ws, _, err := websocket.Dial(ctx, fmt.Sprintf(url, remoteUrl, remotePort), &websocket.DialOptions{HTTPClient: &httpClient})
 		if err != nil {
 			log.Fatalf("[Websocket Client] Dial failed: %s", err)
 		}
