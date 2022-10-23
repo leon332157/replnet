@@ -1,9 +1,7 @@
-import socket
-import threading
 import socketserver as SocketServer
 from socket import error as SocketError
 import errno
-
+# TCP ECHO SERVER WITHOUT TCP CLOSE on exit
 
 class SingleTCPHandler(SocketServer.BaseRequestHandler):
     def handle(self):
