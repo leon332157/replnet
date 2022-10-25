@@ -2,7 +2,7 @@ language = "nix"
 run = "bash main.sh"
 onBoot = "bash bootstrap.sh"
 [replnet]
-mode = "client"
+mode = "server"
 [replnet.client]
 remote-port = 20000
 #app-http-port = 7777 
@@ -10,7 +10,7 @@ remote-port = 20000
 #remote-url = "http://127.0.0.1:9999"
 remote-url = "ws://replnet.leon332157.repl.co"
 [replnet.server]
-reverse-proxt-port = 0
+reverse-proxy-port = 0
 
 [nix]
 channel = "stable-22_05"

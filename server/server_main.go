@@ -34,8 +34,8 @@ type ReplishRouter struct {
 
 func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	if strings.HasPrefix(path, "/__dav") {
-		log.Debug("[Server Router] Match /__dav, passing to webdav")
+	if strings.HasPrefix(path, "/__webdav") {
+		log.Debug("[Server Router] Match /__webdav, passing to webdav")
 		handlerDav(w, r)
 	} else if strings.HasPrefix(path, "/__ws") {
 		log.Debug("[Server Router] Matching /__ws, passing to websocket")
@@ -43,7 +43,13 @@ func (s *ReplishRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if strings.HasPrefix(path, "/__ping") {
 		w.Write([]byte("pong"))
 	} else {
-		//TODO: check reverse proxy flag or check for port
+        if s.config.Server.ReverseProxyPort == 0 {
+			log.Debug("[Server Router] Reverse proxy port is 0, returning 204")
+            w.WriteHeader(http.StatusNoContent)
+			return
+		}
+        //TODOL only return 204 for now
+        log.Debugf("[Server Router] Matching %s, passing to reverseProxy", path)
 		localUrl, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v", s.config.Server.ReverseProxyPort))
 		if err != nil {
 			log.Fatalf("[Server Router] Formatting url failed!")

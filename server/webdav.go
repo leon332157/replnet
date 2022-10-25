@@ -9,6 +9,21 @@ import (
 	"os"
 	"strings"
 )
+var (
+    string ROOT_PATH = nil
+    webdav.Handler webDavHandler = &webdav.Handler{
+		Prefix:     "/__webdav",
+		FileSystem: webdav.Dir(ROOT_PATH),
+		LockSystem: webdav.NewMemLS(),
+		Logger: func(r *http.Request, err error) {
+			if err != nil {
+				log.Debugf("[Webdav Handler] %s %s: %s, ERROR: %s\n", r.UserAgent(), r.Method, r.URL, err)
+			} else {
+				log.Debugf("[Webdav Handler] %s %s: %s \n", r.UserAgent(), r.Method, r.URL)
+			}
+		},
+	}
+)
 
 func handleBasicAuth(username string, password string) bool {
 	err := godotenv.Load()
@@ -18,17 +33,18 @@ func handleBasicAuth(username string, password string) bool {
 	USERNAME, ok := os.LookupEnv("REPLISH_USER")
 	if !ok {
 		log.Error("Looking up username failed")
-		return false
+		return true
 	}
 	PASSWORD, ok := os.LookupEnv("REPLISH_PW")
 	if !ok {
 		log.Error("Looking up password failed")
-		return false
+		return true
 	}
 	return username == USERNAME && password == PASSWORD
 
 }
 func handlerDav(w http.ResponseWriter, r *http.Request) {
+    log.Debugf("[Webdav Handler] URL: %#v",r.URL)
 	if !strings.Contains(r.URL.Path, ".git") {
 		username, password, ok := r.BasicAuth()
 		if !ok {
@@ -53,18 +69,6 @@ func handlerDav(w http.ResponseWriter, r *http.Request) {
 		ROOT_PATH, _ = os.Getwd()
 	}
 	//TODO: Maybe add directory listing
-
-	srv := &webdav.Handler{
-		Prefix:     "/__dav",
-		FileSystem: webdav.Dir(ROOT_PATH),
-		LockSystem: webdav.NewMemLS(),
-		Logger: func(r *http.Request, err error) {
-			if err != nil {
-				log.Debugf("[Webdav Handler] %s %s: %s, ERROR: %s\n", r.UserAgent(), r.Method, r.URL, err)
-			} else {
-				log.Debugf("[Webdav Handler] %s %s: %s \n", r.UserAgent(), r.Method, r.URL)
-			}
-		},
-	}
-	srv.ServeHTTP(w, r)
+    
+	webDavHandler.ServeHTTP(w, r)
 }
